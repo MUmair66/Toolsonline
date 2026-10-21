@@ -37,12 +37,12 @@ export async function Header() {
 
   const logo = (
     <Link href="/" className="group flex shrink-0 items-center gap-2.5" aria-label={`${settings.storeName} home`}>
-      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-md shadow-brand-600/25 transition group-hover:scale-105">
+      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-md shadow-brand-600/25 transition group-hover:scale-105 sm:h-10 sm:w-10">
         <ShoppingBag className="h-5 w-5" />
       </span>
-      <span className="hidden leading-tight sm:block">
-        <span className="block text-lg font-extrabold tracking-tight text-slate-900">{settings.storeName}</span>
-        <span className="block text-[11px] font-medium text-slate-400">Shop smarter, live better</span>
+      <span className="leading-tight">
+        <span className="block max-w-[9rem] truncate text-base font-extrabold tracking-tight text-slate-900 sm:max-w-none sm:text-lg">{settings.storeName}</span>
+        <span className="hidden text-[11px] font-medium text-slate-400 sm:block">Shop smarter, live better</span>
       </span>
     </Link>
   );
@@ -72,7 +72,7 @@ export async function Header() {
 
       <StickyShell>
         {/* Main bar */}
-        <div className="container-x flex h-[72px] items-center gap-3 sm:gap-6">
+        <div className="container-x flex h-16 items-center gap-2 sm:h-[72px] sm:gap-6">
           <MobileMenu nav={NAV} categories={cats} user={user ? { name: user.name, role: user.role } : null} storeName={settings.storeName} phone={settings.contactPhone} />
           {logo}
           <div className="hidden flex-1 justify-center md:flex">

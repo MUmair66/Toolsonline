@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowRight,
   ChevronDown,
   ChevronRight,
+  Home,
+  Store,
   Heart,
   LayoutDashboard,
   LayoutGrid,
@@ -496,6 +499,20 @@ function MenuLink({
 
 /* ---------------- Mobile drawer ---------------- */
 
+const OPEN_MENU_EVENT = "open-mobile-menu";
+
+/** Animated hamburger / close icon. */
+function Burger({ open }: { open: boolean }) {
+  const bar = "absolute left-0 h-0.5 w-full rounded-full bg-current transition-all duration-300 ease-out";
+  return (
+    <span className="relative block h-4 w-5" aria-hidden>
+      <span className={cn(bar, open ? "top-[7px] rotate-45" : "top-0")} />
+      <span className={cn(bar, "top-[7px]", open ? "scale-x-0 opacity-0" : "opacity-100")} />
+      <span className={cn(bar, open ? "top-[7px] -rotate-45" : "top-[14px]")} />
+    </span>
+  );
+}
+
 export function MobileMenu({
   nav,
   categories,
@@ -510,110 +527,258 @@ export function MobileMenu({
   phone: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [showCats, setShowCats] = useState(false);
   const pathname = usePathname();
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => setMounted(true), []);
   useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
+    const openMenu = () => {
+      setShowCats(true);
+      setOpen(true);
+    };
+    window.addEventListener(OPEN_MENU_EVENT, openMenu);
+    return () => window.removeEventListener(OPEN_MENU_EVENT, openMenu);
+  }, []);
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    closeRef.current?.focus();
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
     };
   }, [open]);
 
-  return (
-    <>
-      <button onClick={() => setOpen(true)} className="-ml-2 rounded-xl p-2 text-slate-700 hover:bg-slate-100 lg:hidden" aria-label="Open menu">
-        <Menu className="h-6 w-6" strokeWidth={1.75} />
-      </button>
-      {open && (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
-          <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="animate-in absolute inset-y-0 left-0 flex w-[340px] max-w-[88%] flex-col bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <span className="flex items-center gap-2 font-extrabold">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 text-white">
-                  <ShoppingBag className="h-4 w-4" />
+  const isStaff = user?.role === "ADMIN" || user?.role === "STAFF";
+  const close = () => setOpen(false);
+
+  // Rendered through a portal into <body>. The sticky header uses backdrop-blur, and a
+  // backdrop-filter makes fixed-position children size themselves to the header box instead
+  // of the screen, which squashed the old drawer into the header.
+  const drawer = (
+    <div
+      className={cn("fixed inset-0 z-[60] lg:hidden", open ? "pointer-events-auto" : "pointer-events-none")}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Menu"
+      aria-hidden={!open}
+    >
+      <div
+        className={cn("absolute inset-0 bg-slate-950/50 backdrop-blur-[2px] transition-opacity duration-300", open ? "opacity-100" : "opacity-0")}
+        onClick={close}
+      />
+      <div
+        className={cn(
+          "absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col bg-white shadow-2xl transition-transform duration-300 ease-out",
+          open ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-100 px-4">
+          <Link href="/" onClick={close} className="flex items-center gap-2.5 font-extrabold">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white">
+              <ShoppingBag className="h-[18px] w-[18px]" />
+            </span>
+            <span className="text-lg tracking-tight">{storeName}</span>
+          </Link>
+          <button ref={closeRef} onClick={close} className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100" aria-label="Close menu">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          <div className="p-4">
+            {user ? (
+              <Link href="/account" onClick={close} className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-brand-50 to-fuchsia-50 p-3.5 ring-1 ring-brand-100">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 font-bold text-white">
+                  {user.name.charAt(0).toUpperCase()}
                 </span>
-                {storeName}
-              </span>
-              <button onClick={() => setOpen(false)} className="rounded-lg p-2 hover:bg-slate-100" aria-label="Close menu">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              <div className="border-b border-slate-100 p-5">
-                {user ? (
-                  <Link href="/account" onClick={() => setOpen(false)} className="flex items-center gap-3">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 font-bold text-white">
-                      {user.name.charAt(0).toUpperCase()}
-                    </span>
-                    <span className="flex-1">
-                      <span className="block text-xs text-slate-400">Signed in as</span>
-                      <span className="block font-semibold">{user.name}</span>
-                    </span>
-                    <ChevronRight className="h-5 w-5 text-slate-300" />
-                  </Link>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Link href="/login" onClick={() => setOpen(false)} className="btn-primary">Sign in</Link>
-                    <Link href="/register" onClick={() => setOpen(false)} className="btn-secondary">Register</Link>
-                  </div>
-                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block text-xs text-slate-500">Welcome back</span>
+                  <span className="block truncate font-semibold">{user.name}</span>
+                </span>
+                <ChevronRight className="h-5 w-5 text-slate-400" />
+              </Link>
+            ) : (
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm font-semibold">Welcome!</p>
+                <p className="mt-0.5 text-xs text-slate-500">Sign in for orders, wishlist and faster checkout.</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Link href="/login" onClick={close} className="btn-primary !py-2.5">Sign in</Link>
+                  <Link href="/register" onClick={close} className="btn-secondary !py-2.5">Register</Link>
+                </div>
               </div>
+            )}
+          </div>
 
-              <nav className="p-3" aria-label="Mobile">
-                {nav.map((n) => (
-                  <Link
-                    key={n.href}
-                    href={n.href}
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                      "flex items-center justify-between rounded-xl px-3 py-3 font-medium",
-                      pathname === n.href.split("?")[0] && !n.href.includes("?") ? "bg-brand-50 text-brand-700" : "text-slate-800 hover:bg-slate-50"
-                    )}
-                  >
-                    {n.label}
-                    <ChevronRight className="h-4 w-4 text-slate-300" />
-                  </Link>
-                ))}
-                <Link href="/products?sale=1&sort=discount" onClick={() => setOpen(false)} className="mt-1 flex items-center justify-between rounded-xl bg-red-50 px-3 py-3 font-semibold text-red-600">
-                  🔥 Hot deals <ChevronRight className="h-4 w-4" />
+          <nav className="px-3" aria-label="Mobile">
+            {nav.map((n) => {
+              const active = n.href === "/" ? pathname === "/" : pathname === n.href.split("?")[0] && !n.href.includes("?");
+              return (
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  onClick={close}
+                  className={cn(
+                    "flex items-center justify-between rounded-xl px-3 py-3 text-[15px] font-medium transition",
+                    active ? "bg-brand-50 text-brand-700" : "text-slate-800 active:bg-slate-100"
+                  )}
+                >
+                  {n.label}
+                  <ChevronRight className={cn("h-4 w-4", active ? "text-brand-500" : "text-slate-300")} />
                 </Link>
-              </nav>
+              );
+            })}
 
-              {categories.length > 0 && (
-                <div className="border-t border-slate-100 p-3">
-                  <p className="px-3 pt-2 pb-3 text-[11px] font-semibold tracking-widest text-slate-400 uppercase">Shop by category</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {categories.map((c) => (
-                      <Link
-                        key={c.slug}
-                        href={`/products?category=${c.slug}`}
-                        onClick={() => setOpen(false)}
-                        className="group relative aspect-[4/3] overflow-hidden rounded-xl bg-slate-100"
-                      >
-                        <SafeImage src={c.image} alt={c.name} className="h-full w-full object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                        <span className="absolute bottom-2 left-2.5 text-sm font-semibold text-white">{c.name}</span>
-                      </Link>
-                    ))}
+            {categories.length > 0 && (
+              <div>
+                <button
+                  onClick={() => setShowCats((s) => !s)}
+                  aria-expanded={showCats}
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-[15px] font-medium text-slate-800 active:bg-slate-100"
+                >
+                  <span className="flex items-center gap-2"><LayoutGrid className="h-4 w-4 text-slate-400" /> Categories</span>
+                  <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform duration-200", showCats && "rotate-180")} />
+                </button>
+                <div className={cn("grid transition-all duration-300", showCats ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
+                  <div className="overflow-hidden">
+                    <div className="grid grid-cols-2 gap-2 px-1 pt-1 pb-3">
+                      {categories.map((c) => (
+                        <Link
+                          key={c.slug}
+                          href={`/products?category=${c.slug}`}
+                          onClick={close}
+                          tabIndex={showCats ? 0 : -1}
+                          className="relative aspect-[4/3] overflow-hidden rounded-xl bg-slate-100"
+                        >
+                          <SafeImage src={c.image} alt={c.name} className="h-full w-full object-cover" />
+                          <span className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                          <span className="absolute inset-x-2.5 bottom-2 text-left">
+                            <span className="block text-sm font-semibold text-white">{c.name}</span>
+                            <span className="text-[11px] text-white/75">{c.count} items</span>
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            <div className="border-t border-slate-100 p-4">
-              <a href={`tel:${phone.replace(/[^\d+]/g, "")}`} className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm">
-                <Phone className="h-4 w-4 text-brand-600" />
-                <span>
-                  <span className="block text-xs text-slate-400">Need help? Call us</span>
-                  <span className="font-semibold">{phone}</span>
-                </span>
-              </a>
-            </div>
+            <Link href="/products?sale=1&sort=discount" onClick={close} className="mt-1 flex items-center justify-between rounded-xl bg-red-50 px-3 py-3 text-[15px] font-semibold text-red-600">
+              <span>🔥 Hot deals</span>
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </nav>
+
+          <div className="mt-4 border-t border-slate-100 px-3 py-3">
+            <p className="px-3 pb-1 text-[11px] font-semibold tracking-widest text-slate-400 uppercase">My stuff</p>
+            {[
+              { href: "/account/orders", label: "My orders", icon: Package },
+              { href: "/wishlist", label: "Wishlist", icon: Heart },
+              { href: "/cart", label: "Cart", icon: ShoppingCart },
+              ...(isStaff ? [{ href: "/admin", label: "Admin dashboard", icon: LayoutDashboard }] : []),
+            ].map((l) => (
+              <Link key={l.href} href={l.href} onClick={close} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-700 active:bg-slate-100">
+                <l.icon className="h-[18px] w-[18px] text-slate-400" /> {l.label}
+              </Link>
+            ))}
+            {user && (
+              <form action={logout}>
+                <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-red-600 active:bg-red-50">
+                  <LogOut className="h-[18px] w-[18px]" /> Sign out
+                </button>
+              </form>
+            )}
           </div>
         </div>
-      )}
+
+        <div className="shrink-0 border-t border-slate-100 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <a href={`tel:${phone.replace(/[^\d+]/g, "")}`} className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm"><Phone className="h-4 w-4 text-brand-600" /></span>
+            <span>
+              <span className="block text-xs text-slate-400">Need help? Call us</span>
+              <span className="font-semibold">{phone}</span>
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="-ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-800 transition hover:bg-slate-100 active:scale-95 lg:hidden"
+        aria-label={open ? "Close menu" : "Open menu"}
+        aria-expanded={open}
+      >
+        <Burger open={open} />
+      </button>
+      {mounted && createPortal(drawer, document.body)}
     </>
+  );
+}
+
+/* ---------------- Mobile bottom navigation ---------------- */
+
+export function MobileBottomNav({ signedIn }: { signedIn: boolean }) {
+  const pathname = usePathname();
+  const { count } = useCart();
+
+  const items: { key: string; label: string; icon: typeof Home; href?: string; active: boolean; count?: number }[] = [
+    { key: "home", label: "Home", icon: Home, href: "/", active: pathname === "/" },
+    { key: "shop", label: "Shop", icon: Store, href: "/products", active: pathname.startsWith("/products") },
+    { key: "menu", label: "Categories", icon: LayoutGrid, active: false },
+    { key: "cart", label: "Cart", icon: ShoppingCart, href: "/cart", active: pathname === "/cart" || pathname === "/checkout", count },
+    {
+      key: "account",
+      label: signedIn ? "Account" : "Sign in",
+      icon: User,
+      href: signedIn ? "/account" : "/login",
+      active: pathname.startsWith("/account") || pathname === "/login" || pathname === "/register",
+    },
+  ];
+
+  return (
+    <nav
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_-8px_rgba(15,23,42,0.12)] lg:hidden print:hidden"
+      aria-label="Bottom navigation"
+    >
+      <ul className="mx-auto grid h-16 max-w-lg grid-cols-5">
+        {items.map((i) => {
+          const content = (
+            <>
+              {i.active && <span className="absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-brand-600" />}
+              <span className="relative">
+                <i.icon className={cn("h-[22px] w-[22px] transition", i.active ? "text-brand-600" : "text-slate-500")} strokeWidth={i.active ? 2.2 : 1.8} />
+                {!!i.count && (
+                  <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-600 px-1 text-[9px] font-bold text-white ring-2 ring-white">
+                    {i.count > 99 ? "99+" : i.count}
+                  </span>
+                )}
+              </span>
+              <span className={cn("text-[10px] font-medium", i.active ? "text-brand-700" : "text-slate-500")}>{i.label}</span>
+            </>
+          );
+          const cls = "relative flex h-full w-full flex-col items-center justify-center gap-1 transition active:bg-slate-50";
+          return (
+            <li key={i.key}>
+              {i.href ? (
+                <Link href={i.href} className={cls} aria-current={i.active ? "page" : undefined}>{content}</Link>
+              ) : (
+                <button type="button" className={cls} onClick={() => window.dispatchEvent(new Event(OPEN_MENU_EVENT))}>{content}</button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }

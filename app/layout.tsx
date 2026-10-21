@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { getSettings } from "@/lib/settings";
@@ -9,6 +9,13 @@ import { ToastProvider } from "@/components/providers/ToastProvider";
 import { NavProgress } from "@/components/ui/NavProgress";
 
 export const dynamic = "force-dynamic";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#ffffff",
+};
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
