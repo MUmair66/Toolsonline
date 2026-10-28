@@ -15,6 +15,7 @@ const PER_PAGE = 12;
 type SP = {
   q?: string;
   category?: string;
+  brand?: string;
   sort?: string;
   min?: string;
   max?: string;
@@ -36,6 +37,8 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   if (sp.q) and.push({ OR: [{ name: { contains: sp.q, mode: "insensitive" } }, { description: { contains: sp.q, mode: "insensitive" } }, { sku: { contains: sp.q, mode: "insensitive" } }] });
   const slugs = (sp.category || "").split(",").filter(Boolean);
   if (slugs.length) and.push({ category: { slug: { in: slugs } } });
+  const brandSlugs = (sp.brand || "").split(",").filter(Boolean);
+  if (brandSlugs.length) and.push({ brand: { slug: { in: brandSlugs } } });
   const price: Prisma.FloatFilter = {};
   if (sp.min && !isNaN(Number(sp.min))) price.gte = Number(sp.min);
   if (sp.max && !isNaN(Number(sp.max))) price.lte = Number(sp.max);
@@ -57,24 +60,30 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const total = await db.product.count({ where });
   if (sp.sort === "discount") {
     // Discount % is computed, so sort in memory then paginate.
-    const all = await db.product.findMany({ where, include: { category: true } });
+    const all = await db.product.findMany({ where, include: { category: true, brand: true } });
     const off = (p: { price: number; comparePrice: number | null }) => (p.comparePrice ? 1 - p.price / p.comparePrice : 0);
     raw = all.sort((a, b) => off(b) - off(a)).slice((page - 1) * PER_PAGE, page * PER_PAGE);
   } else {
-    raw = await db.product.findMany({ where, orderBy, include: { category: true }, skip: (page - 1) * PER_PAGE, take: PER_PAGE });
+    raw = await db.product.findMany({ where, orderBy, include: { category: true, brand: true }, skip: (page - 1) * PER_PAGE, take: PER_PAGE });
   }
 
-  const [categories, priceAgg] = await Promise.all([
+  const [categories, brands, priceAgg] = await Promise.all([
     db.category.findMany({ include: { _count: { select: { products: { where: base } } } }, orderBy: { name: "asc" } }),
+    db.brand.findMany({ include: { _count: { select: { products: { where: base } } } }, orderBy: { name: "asc" } }),
     db.product.aggregate({ where: base, _max: { price: true } }),
   ]);
   const products = await withRatings(raw);
   const totalPages = Math.ceil(total / PER_PAGE);
   const selectedCats = categories.filter((c) => slugs.includes(c.slug));
   const list = sp.view === "list";
-  const activeCount = [sp.q, sp.category, sp.min || sp.max, sp.rating, sp.instock, sp.sale, sp.featured].filter(Boolean).length;
+  const selectedBrands = brands.filter((b) => brandSlugs.includes(b.slug));
+  const activeCount = [sp.q, sp.category, sp.brand, sp.min || sp.max, sp.rating, sp.instock, sp.sale, sp.featured].filter(Boolean).length;
 
-  const title = selectedCats.length === 1 ? selectedCats[0].name : sp.q ? `Results for "${sp.q}"` : sp.sale ? "On sale" : "All products";
+  const title =
+    selectedCats.length === 1 && selectedBrands.length === 1 ? `${selectedBrands[0].name} ${selectedCats[0].name}`
+    : selectedCats.length === 1 ? selectedCats[0].name
+    : selectedBrands.length === 1 && !sp.category ? `${selectedBrands[0].name} products`
+    : sp.q ? `Results for "${sp.q}"` : sp.sale ? "On sale" : "All products";
 
   return (
     <FilterProvider>
@@ -91,6 +100,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
           <ProductFilters
             categories={categories.map((c) => ({ name: c.name, slug: c.slug, count: c._count.products }))}
+            brands={brands.filter((b) => b._count.products > 0).map((b) => ({ name: b.name, slug: b.slug, count: b._count.products }))}
             maxPrice={priceAgg._max.price ?? 100}
             activeCount={activeCount}
           />
@@ -106,7 +116,10 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
               </div>
             </div>
             <div className="mb-6">
-              <ActiveFilters categoryNames={Object.fromEntries(categories.map((c) => [c.slug, c.name]))} />
+              <ActiveFilters
+                categoryNames={Object.fromEntries(categories.map((c) => [c.slug, c.name]))}
+                brandNames={Object.fromEntries(brands.map((b) => [b.slug, b.name]))}
+              />
             </div>
 
             <ResultsShell>

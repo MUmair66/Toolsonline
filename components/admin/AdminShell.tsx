@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   Activity,
+  Award,
   Bell,
   Bot,
   ChevronDown,
@@ -23,7 +24,6 @@ import {
   Search,
   Settings,
   ShieldCheck,
-  ShoppingBag,
   ShoppingCart,
   Ticket,
   Upload,
@@ -57,6 +57,7 @@ const GROUPS: { title: string; items: NavItem[] }[] = [
       { href: "/admin/products", label: "Products", icon: Package, perm: "products" },
       { href: "/admin/products/import", label: "Bulk import", icon: Upload, perm: "products" },
       { href: "/admin/categories", label: "Categories", icon: FolderTree, perm: "categories" },
+      { href: "/admin/brands", label: "Brands", icon: Award, perm: "categories" },
     ],
   },
   {
@@ -156,9 +157,8 @@ export function AdminShell({
       {/* Brand */}
       <div className={cn("flex h-16 shrink-0 items-center gap-3 border-b border-slate-100", mini ? "justify-center px-2" : "px-5")}>
         <Link href="/admin" className="flex min-w-0 items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-md shadow-brand-600/30">
-            <ShoppingBag className="h-[18px] w-[18px]" />
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/emblem.png" alt="" width={36} height={36} className="h-9 w-9 shrink-0" />
           {!mini && (
             <span className="min-w-0 leading-tight">
               <span className="block truncate text-[15px] font-bold text-slate-900">{storeName}</span>
@@ -260,7 +260,7 @@ export function AdminShell({
           <Link
             href="/"
             target="_blank"
-            className="flex items-center justify-between rounded-xl bg-gradient-to-br from-brand-50 to-fuchsia-50 px-3.5 py-3 text-sm ring-1 ring-brand-100 transition hover:ring-brand-200"
+            className="flex items-center justify-between rounded-xl bg-gradient-to-br from-brand-50 to-amber-50 px-3.5 py-3 text-sm ring-1 ring-brand-100 transition hover:ring-brand-200"
           >
             <span>
               <span className="block font-semibold text-slate-900">View your store</span>

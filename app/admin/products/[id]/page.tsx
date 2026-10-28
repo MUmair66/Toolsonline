@@ -10,15 +10,16 @@ export const metadata = { title: "Edit product" };
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   await requirePerm("products");
   const { id } = await params;
-  const [product, categories] = await Promise.all([
+  const [product, categories, brands] = await Promise.all([
     db.product.findUnique({ where: { id } }),
     db.category.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    db.brand.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
   if (!product) notFound();
   return (
     <div>
       <PageHeader title="Edit product" description={product.name} />
-      <ProductForm product={{ ...product, images: parseImages(product.images) }} categories={categories} />
+      <ProductForm product={{ ...product, images: parseImages(product.images) }} categories={categories} brands={brands} />
     </div>
   );
 }

@@ -3,6 +3,11 @@ export function cn(...classes: (string | false | null | undefined)[]) {
 }
 
 export function formatPrice(amount: number, currency = "USD") {
+  // Rupee currencies are shown the local way: "Rs. 4,200" (no decimals unless there are paisa).
+  if (currency === "PKR" || currency === "INR") {
+    const whole = Math.round(amount * 100) % 100 === 0;
+    return `Rs. ${amount.toLocaleString("en-US", { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: 2 })}`;
+  }
   try {
     return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
   } catch {

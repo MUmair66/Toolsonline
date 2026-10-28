@@ -1,0 +1,103 @@
+import type { CatalogBrand } from "./types";
+
+// Source: "Final AHS Tools Product Price List.pdf" (AHS Professional Tools). Prices in PKR.
+export const AHS: CatalogBrand = {
+  slug: "ahs",
+  name: "AHS",
+  description: "AHS Professional Tools — grinders, drills, hammers, cutters, welding machines and more.",
+  products: [
+    // ---- Page 1: angle grinders ----
+    { model: "AHS 801-4", type: "Angle Grinder", category: "grinders", specs: ["Disc: 4″ / 100mm", "Power: 850W", "Speed: 10,000 rpm"], price: 4200, image: "ahs-801-4", featured: true },
+    { model: "AHS 801-5", type: "Angle Grinder", category: "grinders", specs: ["Disc: 5″ / 125mm", "Power: 850W", "Speed: 10,000 rpm"], price: 4500, image: "ahs-801-5" },
+    { model: "AHS 905-4", type: "Angle Grinder", category: "grinders", specs: ["Disc: 4″ / 100mm", "Power: 750W", "Speed: 12,000 rpm"], price: 4700, image: "ahs-905-4" },
+    { model: "AHS 905-5", type: "Angle Grinder", category: "grinders", specs: ["Disc: 5″ / 125mm", "Power: 750W", "Speed: 12,000 rpm"], price: 5000, image: "ahs-905-5" },
+    { model: "AHS 801 PRO-4", type: "Angle Grinder", category: "grinders", specs: ["Disc: 4″ / 100mm", "Power: 1000W", "Speed: 11,800 rpm"], price: 6800, image: "ahs-801-pro-4" },
+    { model: "AHS 801 PRO-5", type: "Angle Grinder", category: "grinders", specs: ["Disc: 5″ / 125mm", "Power: 1000W", "Speed: 11,800 rpm"], price: 7300, image: "ahs-801-pro-5" },
+    { model: "AHS 801-L-4", type: "Angle Grinder", category: "grinders", specs: ["Disc: 4″ / 100mm", "Power: 800W", "Speed: 11,000 rpm"], price: 5500, image: "ahs-801-l-4" },
+    { model: "AHS 801-L-5", type: "Angle Grinder", category: "grinders", specs: ["Disc: 5″ / 125mm", "Power: 800W", "Speed: 11,000 rpm"], price: 5800, image: "ahs-801-l-5" },
+
+    // ---- Page 2: large grinders, polisher, drills ----
+    { model: "AHS G15SA2", type: "Angle Grinder", category: "grinders", specs: ["Disc: 6″ / 150mm", "Power: 1400W", "Speed: 8,500 rpm"], price: 9500, image: "ahs-g15sa2" },
+    { model: "AHS 20-230 PRO", type: "Angle Grinder", category: "grinders", specs: ["Disc: 9″ / 230mm", "Power: 2200W", "Speed: 6,500 rpm"], price: 18500, image: "ahs-20-230-pro" },
+    { model: "AHS 9020 PRO", type: "Angle Grinder", category: "grinders", specs: ["Disc: 9″ / 230mm", "Power: 2400W", "Speed: 6,500 rpm"], price: 19500, image: "ahs-9020-pro" },
+    { model: "AHS 24-230 PRO", type: "Angle Grinder", category: "grinders", specs: ["Disc: 9″ / 230mm", "Power: 2600W", "Speed: 6,500 rpm"], price: 21000, image: "ahs-24-230-pro" },
+    { model: "AHS 9040 PRO", type: "Angle Grinder", category: "grinders", specs: ["Disc: 9″ / 230mm", "Power: 2800W", "Speed: 6,500 rpm"], price: 22000, image: "ahs-9040-pro", featured: true },
+    { model: "AHS Polisher", type: "Polisher", category: "car-care", specs: ["Pad: 7″ / 180mm", "Power: 1200W", "Speed: 0–3,000 rpm"], price: 10000, image: "ahs-polisher" },
+    { model: "AHS 10A", type: "Electric Drill", category: "drills-drivers", specs: ["Chuck: 3/8″ / 10mm", "Power: 450W", "Speed: 0–3,300 rpm"], price: 3500, image: "ahs-10a" },
+    { model: "AHS 10B", type: "Screwdriver", category: "drills-drivers", specs: ["Chuck: 3/8″ / 10mm", "Power: 600W", "Speed: 0–750 rpm"], price: 4000, image: "ahs-10b" },
+    { model: "AHS 13A", type: "Impact Drill", category: "drills-drivers", specs: ["Chuck: 1/2″ / 13mm", "Power: 800W", "Speed: 0–3,300 rpm"], price: 6000, image: "ahs-13a", featured: true },
+    { model: "AHS EID-13", type: "Impact Drill", category: "drills-drivers", specs: ["Chuck: 1/2″ / 13mm", "Power: 600W", "Speed: 2,800 rpm"], price: 6500, image: "ahs-eid-13" },
+    { model: "AHS 2013 PRO", type: "Impact Drill", category: "drills-drivers", specs: ["Chuck: 1/2″ / 13mm", "Power: 650W", "Speed: 0–3,000 rpm"], price: 7000, image: "ahs-2013-pro" },
+    { model: "AHS 160A", type: "Electric Drill", category: "drills-drivers", specs: ["Chuck: 5/8″ / 16mm", "Power: 800W"], price: 9000, image: "ahs-160a" },
+
+    // ---- Page 3: cordless, wrenches, tile vibrators, mixers, rotary hammers ----
+    { model: "AHS 12V-1", type: "Cordless Drill", category: "cordless-tools", specs: ["Chuck: 3/8″ / 10mm", "Battery: 12V 1.3Ah"], price: 3600, image: "ahs-12v-1" },
+    { model: "AHS 12V", type: "Cordless Drill", category: "cordless-tools", specs: ["Chuck: 3/8″ / 10mm", "Battery: 12V 1.5Ah × 2"], price: 7500, image: "ahs-12v" },
+    { model: "AHS CD-21A", type: "Cordless Drill", category: "cordless-tools", specs: ["Chuck: 3/8″ / 10mm", "Torque: 30Nm", "Battery: 21V 1.5Ah"], price: 9500, image: "ahs-cd-21a", featured: true },
+    { model: "AHS CIW-21V", type: "Cordless Impact Wrench", category: "impact-wrenches", specs: ["Drive: 1/2″", "Torque: 330Nm", "Battery: 21V 3.0Ah"], price: 19500, image: "ahs-ciw-21v" },
+    { model: "AHS 12003 PRO", type: "Cordless Tile Vibrator", category: "mixers-tiling", specs: ["Suction cup: 160mm", "Holds up to 60kg", "Battery: 12V", "Speed: 5,300–7,800 rpm"], price: 12000, image: "ahs-12003-pro" },
+    { model: "AHS 21005 PRO", type: "Cordless Tile Vibrator", category: "mixers-tiling", specs: ["Suction cup: 160mm", "Holds up to 60kg", "Battery: 21V", "Speed: 3,500–8,500 rpm"], price: 15000, image: "ahs-21005-pro" },
+    { model: "AHS 20C PRO", type: "Electric Impact Wrench", category: "impact-wrenches", specs: ["Drive: 1/2″ / 12.7mm", "Power: 450W", "Torque: 260Nm", "Speed: 1,900 rpm"], price: 16000, image: "ahs-20c-pro" },
+    { model: "AHS 22C PRO", type: "Electric Impact Wrench", category: "impact-wrenches", specs: ["Drive: 3/4″ / 19mm", "Power: 600W", "Torque: 600Nm", "Speed: 1,800 rpm"], price: 24000, image: "ahs-22c-pro" },
+    { model: "AHS 160M", type: "Electric Mixer", category: "mixers-tiling", specs: ["Power: 800W"], price: 9000, image: "ahs-160m" },
+    { model: "AHS 260M", type: "Electric Mixer", category: "mixers-tiling", specs: ["Power: 1100W", "Paddle: 160mm", "Torque: 5.6Nm", "Speed: 420–1,100 rpm"], price: 10500, image: "ahs-260m" },
+    { model: "AHS 2-20", type: "Rotary Hammer Drill", category: "hammers", specs: ["Drilling: 20mm", "Power: 500W", "Speed: 0–850 rpm"], price: 8500, image: "ahs-2-20" },
+    { model: "AHS 2-26", type: "Rotary Hammer Drill", category: "hammers", specs: ["Drilling: 26mm", "Power: 800W", "Speed: 0–1,200 rpm"], price: 14000, image: "ahs-2-26", featured: true },
+
+    // ---- Page 4: demolition hammers, heat gun, blowers, die grinder ----
+    { model: "AHS 0810", type: "Demolition Hammer", category: "hammers", specs: ["Power: 1050W", "Speed: 2,900 rpm"], price: 14500, image: "ahs-0810" },
+    { model: "AHS 0830", type: "Demolition Hammer", category: "hammers", specs: ["Power: 1200W", "Speed: 2,900 rpm"], price: 16000, image: "ahs-0830" },
+    { model: "AHS 0835", type: "Demolition Hammer", category: "hammers", specs: ["Power: 900W", "Speed: 0–2,900 rpm"], price: 17500, image: "ahs-0835" },
+    { model: "AHS 855 PRO", type: "Demolition Hammer", category: "hammers", specs: ["Power: 1400W", "Chisel: 13mm", "Speed: 3,800 rpm"], price: 21000, image: "ahs-855-pro" },
+    { model: "AHS 65A", type: "Demolition Hammer", category: "hammers", specs: ["Power: 1500W", "Chisel: 30mm", "Impact rate: 1,400 /min"], price: 32000, image: "ahs-65a" },
+    { model: "AHS 65A PRO", type: "Demolition Hammer", category: "hammers", specs: ["Power: 2500W", "Chisel: 30mm", "Impact rate: 1,400 /min"], price: 38000, image: "ahs-65a-pro", featured: true },
+    { model: "AHS 95", type: "Demolition Hammer", category: "hammers", specs: ["Power: 3500W", "Chisel: 30mm"], price: 40000, image: "ahs-95" },
+    { model: "AHS 2000 PRO", type: "Electric Heat Gun", category: "heat-guns-blowers", specs: ["Power: 2000W", "Temperature: 60–600°C"], price: 5800, image: "ahs-2000-pro" },
+    { model: "AHS 40", type: "Electric Blower", category: "heat-guns-blowers", specs: ["Power: 700W"], price: 5200, image: "ahs-40" },
+    { model: "AHS 1007", type: "Electric Blower", category: "heat-guns-blowers", specs: ["Power: 650W"], price: 5500, image: "ahs-1007" },
+    { model: "AHS 999", type: "Vacuum Blower", category: "heat-guns-blowers", specs: ["Power: 900W"], price: 8000, image: "ahs-999" },
+    { model: "AHS 25 PRO", type: "Die Grinder", category: "grinders", specs: ["Collet: 25mm", "Power: 650W", "Speed: 30,000 rpm"], price: 7500, image: "ahs-25-pro" },
+
+    // ---- Page 5: woodworking, cutters, saws, welding ----
+    { model: "AHS 1900B", type: "Electric Planer", category: "woodworking", specs: ["Width: 82mm", "Power: 600W"], price: 7500, image: "ahs-1900b" },
+    { model: "AHS 2510", type: "Electric Planer", category: "woodworking", specs: ["Width: 82mm", "Power: 750W"], price: 8000, image: "ahs-2510" },
+    { model: "AHS 3703 PRO", type: "Trimmer", category: "woodworking", specs: ["Collet: 1/4″ / 6.35mm", "Power: 500W", "Speed: 33,000 rpm"], price: 7300, image: "ahs-3703-pro" },
+    { model: "AHS 3612 PRO", type: "Wood Router", category: "woodworking", specs: ["Collet: 1/2″ / 12.7mm", "Power: 1850W"], price: 16000, image: "ahs-3612-pro" },
+    { model: "AHS CM4SB", type: "Marble Cutter", category: "saws-cutters", specs: ["Blade: 4″ / 110mm", "Power: 1200W"], price: 6500, image: "ahs-cm4sb" },
+    { model: "AHS PRO 110B", type: "Marble Cutter", category: "saws-cutters", specs: ["Blade: 4″ / 110mm", "Power: 1300W"], price: 10000, image: "ahs-pro-110b" },
+    { model: "AHS C7", type: "Circular Saw", category: "saws-cutters", specs: ["Blade: 7″ / 185mm", "Power: 1100W"], price: 10000, image: "ahs-c7" },
+    { model: "AHS 5900B", type: "Circular Saw", category: "saws-cutters", specs: ["Blade: 9″ / 235mm", "Power: 1500W", "Coming soon"], price: null },
+    { model: "AHS 200A", type: "Welding Machine", category: "welding-machines", specs: ["Output: 200A"], price: 17500, image: "ahs-200a" },
+    { model: "AHS 250A", type: "Welding Machine", category: "welding-machines", specs: ["Output: 250A"], price: 19000, image: "ahs-250a", featured: true },
+    { model: "AHS 300A", type: "Welding Machine", category: "welding-machines", specs: ["Output: 300A"], price: 22000, image: "ahs-300a" },
+    { model: "AHS 400A", type: "Welding Machine", category: "welding-machines", specs: ["Output: 400A"], price: 26000, image: "ahs-400a" },
+
+    // ---- Page 6: car washer, cut-off machines, motor cutters, miter saw, sprayers ----
+    { model: "AHS M3", type: "Car Washer", category: "car-care", specs: ["Pressure: 120 bar / 10 MPa", "Power: 1800W", "100% copper winding"], price: 20000, image: "ahs-m3" },
+    { model: "AHS 355C-1", type: "Cut-off Machine", category: "cut-off-machines", specs: ["Disc: 14″ / 355mm", "Power: 2200W"], price: 19000, image: "ahs-355c-1" },
+    { model: "AHS 355A", type: "Cut-off Machine", category: "cut-off-machines", specs: ["Disc: 14″ / 355mm", "Power: 2600W"], price: 25000, image: "ahs-355a", featured: true },
+    { model: "AHS 355 PRO", type: "Cut-off Machine", category: "cut-off-machines", specs: ["Disc: 14″ / 355mm", "Power: 3200W", "Soft start"], price: 34000, image: "ahs-355-pro" },
+    { model: "AHS 400-220", variant: "3HP", type: "Motor Cutter Machine", category: "cut-off-machines", specs: ["Disc: 16″ / 400mm", "Supply: 220V", "Motor: 3HP / 2.2kW"], price: 70000, image: "ahs-400-220-3hp" },
+    { model: "AHS 400-380", variant: "3HP", type: "Motor Cutter Machine", category: "cut-off-machines", specs: ["Disc: 16″ / 400mm", "Supply: 380V", "Motor: 3HP / 2.2kW"], price: 70000, image: "ahs-400-380-3hp" },
+    { model: "AHS 400-220", variant: "4HP", type: "Motor Cutter Machine", category: "cut-off-machines", specs: ["Disc: 16″ / 400mm", "Supply: 220V", "Motor: 4HP / 3kW"], price: 75000, image: "ahs-400-220-4hp" },
+    { model: "AHS 400-380", variant: "4HP", type: "Motor Cutter Machine", category: "cut-off-machines", specs: ["Disc: 16″ / 400mm", "Supply: 380V", "Motor: 4HP / 3kW"], price: 75000, image: "ahs-400-380-4hp" },
+    { model: "AHS 255", type: "Miter Saw", category: "saws-cutters", specs: ["Blade: 10″ / 255mm", "Power: 1650W"], price: 24000, image: "ahs-255" },
+    { model: "AHS 4500 PRO", type: "Airless Sprayer", category: "airless-sprayers", specs: ["Spray width: 250mm", "Power: 1800W"], price: 70000, image: "ahs-4500-pro" },
+    { model: "AHS 9900 PRO", type: "Airless Sprayer", category: "airless-sprayers", specs: ["Spray width: 250mm", "Power: 3000W"], price: 100000, image: "ahs-9900-pro" },
+    { model: "AHS 595 PRO", type: "Airless Sprayer", category: "airless-sprayers", specs: ["Spray width: 200mm", "Power: 1500W"], price: 125000, image: "ahs-595-pro" },
+
+    // ---- Page 7: magnetic drills, diamond core drills ----
+    { model: "AHS 16", type: "Magnetic Drill", category: "magnetic-drills", specs: ["Drilling: 16mm", "Power: 1000W", "Coming soon"], price: null },
+    { model: "AHS 23", type: "Magnetic Drill", category: "magnetic-drills", specs: ["Drilling: 23mm", "Power: 1300W"], price: 75000, image: "ahs-23" },
+    { model: "AHS 23D", type: "Magnetic Drill", category: "magnetic-drills", specs: ["Drilling: 23mm", "Power: 1300W", "Forward & reverse (left & right)"], price: 80000, image: "ahs-23d" },
+    { model: "AHS 28", type: "Magnetic Drill", category: "magnetic-drills", specs: ["Drilling: 28mm", "Power: 1650W"], price: 85000, image: "ahs-28" },
+    { model: "AHS 28D", type: "Magnetic Drill", category: "magnetic-drills", specs: ["Drilling: 28mm", "Power: 1650W", "Forward & reverse (left & right)"], price: 90000, image: "ahs-28d" },
+    { model: "AHS 40 PRO", type: "Magnetic Drill", category: "magnetic-drills", specs: ["Power: 1400W", "Variable speed", "Forward & reverse (left & right)"], price: 95000, image: "ahs-40-pro" },
+    { model: "AHS 60 PRO", type: "Magnetic Drill", category: "magnetic-drills", specs: ["Power: 1800W", "Variable speed", "Forward & reverse (left & right)"], price: 120000, image: "ahs-60-pro" },
+    { model: "AHS 160", type: "Diamond Core Drill", category: "core-drills", specs: ["Core size: 160mm", "Power: 2000W"], price: 16500, image: "ahs-160" },
+    { model: "AHS 200", type: "Diamond Core Drill", category: "core-drills", specs: ["Core size: 200mm", "Power: 3800W"], price: 60000, image: "ahs-200" },
+    { model: "AHS 250", type: "Diamond Core Drill", category: "core-drills", specs: ["Core size: 250mm", "Power: 4000W"], price: 65000, image: "ahs-250" },
+    { model: "AHS 254", type: "Diamond Core Drill", category: "core-drills", specs: ["Core size: 254mm", "Power: 4200W"], price: 80000, image: "ahs-254" },
+    { model: "AHS 300", type: "Diamond Core Drill", category: "core-drills", specs: ["Core size: 300mm", "Power: 4300W"], price: 90000, image: "ahs-300" },
+  ],
+};

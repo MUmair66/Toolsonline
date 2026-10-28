@@ -113,7 +113,7 @@ function Section({ title, children, onClear }: { title: string; children: React.
   );
 }
 
-function FilterBody({ categories, maxPrice }: { categories: Cat[]; maxPrice: number }) {
+function FilterBody({ categories, brands, maxPrice }: { categories: Cat[]; brands: Cat[]; maxPrice: number }) {
   const params = useSearchParams();
   const { update } = useFilters();
   const fmt = usePrice();
@@ -149,13 +149,23 @@ function FilterBody({ categories, maxPrice }: { categories: Cat[]; maxPrice: num
     const next = selected.includes(slug) ? selected.filter((s) => s !== slug) : [...selected, slug];
     update({ category: next.join(",") || null });
   };
+  const selectedBrands = (params.get("brand") || "").split(",").filter(Boolean);
+  const toggleBrand = (slug: string) => {
+    const next = selectedBrands.includes(slug) ? selectedBrands.filter((s) => s !== slug) : [...selectedBrands, slug];
+    update({ brand: next.join(",") || null });
+  };
 
-  const step = maxPrice > 500 ? 100 : maxPrice > 100 ? 25 : 10;
+  // Quick price ranges scaled to the catalog (e.g. Rs. 5,000 / 20,000 / 50,000 for tools).
+  const nice = (n: number) => {
+    const p = 10 ** Math.floor(Math.log10(Math.max(n, 1)));
+    return [1, 2, 2.5, 5, 10].map((m) => m * p).reduce((a, b) => (Math.abs(b - n) < Math.abs(a - n) ? b : a));
+  };
+  const [t1, t2, t3] = [nice(maxPrice * 0.04), nice(maxPrice * 0.15), nice(maxPrice * 0.4)];
   const chips = [
-    { label: `Under ${fmt(step)}`, min: "", max: String(step) },
-    { label: `${fmt(step)} – ${fmt(step * 4)}`, min: String(step), max: String(step * 4) },
-    { label: `${fmt(step * 4)} – ${fmt(step * 10)}`, min: String(step * 4), max: String(step * 10) },
-    { label: `Over ${fmt(step * 10)}`, min: String(step * 10), max: "" },
+    { label: `Under ${fmt(t1)}`, min: "", max: String(t1) },
+    { label: `${fmt(t1)} – ${fmt(t2)}`, min: String(t1), max: String(t2) },
+    { label: `${fmt(t2)} – ${fmt(t3)}`, min: String(t2), max: String(t3) },
+    { label: `Over ${fmt(t3)}`, min: String(t3), max: "" },
   ];
 
   return (
@@ -166,6 +176,22 @@ function FilterBody({ categories, maxPrice }: { categories: Cat[]; maxPrice: num
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Type to filter…" className="input !py-2 pl-9" aria-label="Filter by keyword" />
         </div>
       </Section>
+
+      {brands.length > 0 && (
+        <Section title="Brands" onClear={selectedBrands.length ? () => update({ brand: null }) : undefined}>
+          <ul className="space-y-1">
+            {brands.map((b) => (
+              <li key={b.slug}>
+                <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm hover:bg-slate-50">
+                  <input type="checkbox" checked={selectedBrands.includes(b.slug)} onChange={() => toggleBrand(b.slug)} className="h-4 w-4 rounded accent-brand-600" />
+                  <span className={cn("flex-1 font-medium", selectedBrands.includes(b.slug) && "font-semibold text-brand-700")}>{b.name}</span>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{b.count}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
 
       <Section title="Categories" onClear={selected.length ? () => update({ category: null }) : undefined}>
         <ul className="space-y-1">
@@ -247,13 +273,13 @@ function FilterBody({ categories, maxPrice }: { categories: Cat[]; maxPrice: num
   );
 }
 
-export function ProductFilters({ categories, maxPrice, activeCount }: { categories: Cat[]; maxPrice: number; activeCount: number }) {
+export function ProductFilters({ categories, brands = [], maxPrice, activeCount }: { categories: Cat[]; brands?: Cat[]; maxPrice: number; activeCount: number }) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <aside className="hidden w-64 shrink-0 lg:block">
         <div className="sticky top-36 max-h-[calc(100vh-10rem)] overflow-y-auto pr-2">
-          <FilterBody categories={categories} maxPrice={maxPrice} />
+          <FilterBody categories={categories} brands={brands} maxPrice={maxPrice} />
         </div>
       </aside>
       <button onClick={() => setOpen(true)} className="btn-secondary self-start !py-2 lg:hidden">
@@ -271,7 +297,7 @@ export function ProductFilters({ categories, maxPrice, activeCount }: { categori
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-5">
-              <FilterBody categories={categories} maxPrice={maxPrice} />
+              <FilterBody categories={categories} brands={brands} maxPrice={maxPrice} />
             </div>
             <div className="border-t border-slate-200 p-4">
               <button onClick={() => setOpen(false)} className="btn-primary w-full">Show results</button>
@@ -283,12 +309,14 @@ export function ProductFilters({ categories, maxPrice, activeCount }: { categori
   );
 }
 
-export function ActiveFilters({ categoryNames }: { categoryNames: Record<string, string> }) {
+export function ActiveFilters({ categoryNames, brandNames = {} }: { categoryNames: Record<string, string>; brandNames?: Record<string, string> }) {
   const params = useSearchParams();
   const { update } = useFilters();
   const fmt = usePrice();
   const chips: { label: string; clear: Record<string, string | null> }[] = [];
   if (params.get("q")) chips.push({ label: `"${params.get("q")}"`, clear: { q: null } });
+  const brandsSel = (params.get("brand") || "").split(",").filter(Boolean);
+  for (const b of brandsSel) chips.push({ label: brandNames[b] ?? b, clear: { brand: brandsSel.filter((x) => x !== b).join(",") || null } });
   const cats = (params.get("category") || "").split(",").filter(Boolean);
   for (const c of cats) chips.push({ label: categoryNames[c] ?? c, clear: { category: cats.filter((x) => x !== c).join(",") || null } });
   if (params.get("min") || params.get("max"))
@@ -309,7 +337,7 @@ export function ActiveFilters({ categoryNames }: { categoryNames: Record<string,
         </button>
       ))}
       <button
-        onClick={() => update({ q: null, category: null, min: null, max: null, rating: null, instock: null, sale: null, featured: null })}
+        onClick={() => update({ q: null, brand: null, category: null, min: null, max: null, rating: null, instock: null, sale: null, featured: null })}
         className="text-xs font-semibold text-slate-500 hover:text-slate-900"
       >
         Clear all

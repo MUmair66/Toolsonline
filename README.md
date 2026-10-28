@@ -1,27 +1,26 @@
-# ShopNext — Next.js E-commerce Store + Admin Dashboard
+# Toolsonline — Your Hardware Partner
 
-A full-stack e-commerce site built with **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS 4** and **Prisma + SQLite**.
+A full-stack e-commerce site built with **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS 4**, **Prisma + PostgreSQL (Neon)** and **Cloudflare R2** for images. Deployed on Vercel.
 
 ## Quick start
 
 ```bash
 npm install
-npm run setup     # creates the SQLite database and loads demo data
+npm run setup     # creates the tables and loads the catalog (needs .env, see .env.example)
 npm run dev       # http://localhost:3000
 ```
 
 If npm reports blocked install scripts, run:
 `npm install-scripts approve @prisma/client @prisma/engines esbuild prisma`, then `npm rebuild`.
 
-**Demo accounts**
+## Product catalog
 
-| Role     | Email               | Password    |
-| -------- | ------------------- | ----------- |
-| Admin    | admin@shopnext.com  | admin123    |
-| Staff    | staff@shopnext.com  | staff123    |
-| Customer | john@example.com    | password123 |
+Products live in `prisma/data/` — one file per brand (`ahs.ts`) plus shared `categories.ts`.
 
-Demo coupons: `WELCOME10` (10% off), `SAVE20` ($20 off over $100), `VIP25` (25% off over $200).
+- `npm run catalog:sync` — add new products / update existing ones by SKU. Never deletes anything and keeps stock you set in admin.
+- `npm run catalog:reset` — one-time store reset: removes orders, customers, reviews, coupons and the old catalog (admin accounts are kept), then loads the catalog.
+
+To add a brand: copy `prisma/data/ahs.ts` to e.g. `bosch.ts`, fill in the products, add it to `BRANDS` in `prisma/catalog.ts`, upload photos to R2 under `products/<brand>/`, then run `npm run catalog:sync`. You can also add products one by one in **Admin → Products**, or in bulk with **Admin → Bulk import** (CSV with a `brand` column).
 
 ## Storefront features
 

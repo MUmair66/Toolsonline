@@ -18,8 +18,8 @@ export default async function CategoriesPage() {
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {categories.map((c) => (
           <Link key={c.id} href={`/products?category=${c.slug}`} className="group card overflow-hidden transition hover:shadow-lg">
-            <div className="aspect-[16/10] overflow-hidden bg-slate-100">
-              <SafeImage src={c.image} alt={c.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+            <div className="aspect-[16/10] overflow-hidden bg-white p-4">
+              <SafeImage src={c.image} alt={c.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
             </div>
             <div className="p-5">
               <div className="flex items-center justify-between">

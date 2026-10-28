@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Check, ChevronRight, RotateCcw, ShieldCheck, Truck } from "lucide-react";
+import { Banknote, Check, ChevronRight, Phone, ShieldCheck, Truck } from "lucide-react";
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { getCurrentUser } from "@/lib/auth";
@@ -28,6 +28,7 @@ export default async function ProductPage({ params }: Props) {
     where: { slug },
     include: {
       category: true,
+      brand: true,
       reviews: { where: { approved: true }, include: { user: { select: { name: true } } }, orderBy: { createdAt: "desc" } },
     },
   });
@@ -38,7 +39,7 @@ export default async function ProductPage({ params }: Props) {
     getCurrentUser(),
     db.product.findMany({
       where: { ...visibleWhere(settings), categoryId: product.categoryId, id: { not: product.id } },
-      include: { category: true },
+      include: { category: true, brand: true },
       take: 4,
     }),
   ]);
@@ -74,7 +75,18 @@ export default async function ProductPage({ params }: Props) {
         <ProductGallery images={images} name={product.name} />
 
         <div>
-          {product.category && <p className="text-sm font-semibold tracking-wide text-brand-600 uppercase">{product.category.name}</p>}
+          <p className="flex flex-wrap items-center gap-2 text-sm font-semibold tracking-wide uppercase">
+            {product.brand && (
+              <Link href={`/products?brand=${product.brand.slug}`} className="rounded-md bg-slate-900 px-2 py-0.5 text-xs text-white hover:bg-brand-600">
+                {product.brand.name}
+              </Link>
+            )}
+            {product.category && (
+              <Link href={`/products?category=${product.category.slug}`} className="text-brand-600 hover:underline">
+                {product.category.name}
+              </Link>
+            )}
+          </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">{product.name}</h1>
 
           <div className="mt-3 flex items-center gap-3">
@@ -127,10 +139,14 @@ export default async function ProductPage({ params }: Props) {
                 : `Shipping: ${fmt(settings.shippingFee)}`}
             </li>
             <li className="flex items-center gap-3">
-              <RotateCcw className="h-5 w-5 text-brand-600" /> 30-day hassle-free returns
+              <Banknote className="h-5 w-5 text-brand-600" /> Cash on delivery available
             </li>
             <li className="flex items-center gap-3">
-              <ShieldCheck className="h-5 w-5 text-brand-600" /> Secure checkout & 1-year warranty
+              <ShieldCheck className="h-5 w-5 text-brand-600" /> Secure checkout
+            </li>
+            <li className="flex items-center gap-3">
+              <Phone className="h-5 w-5 text-brand-600" />
+              <span>Questions about this tool? <Link href="/contact" className="font-semibold text-brand-600 hover:underline">Contact us</Link></span>
             </li>
           </ul>
         </div>

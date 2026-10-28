@@ -62,8 +62,8 @@ export function StickyShell({ children }: { children: React.ReactNode }) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 border-b bg-white/95 backdrop-blur-md transition-shadow duration-300",
-        scrolled ? "border-slate-200 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.15)]" : "border-slate-200/70"
+        "sticky top-0 z-40 border-b bg-slate-950/95 text-white backdrop-blur-md transition-shadow duration-300",
+        scrolled ? "border-white/10 shadow-[0_6px_24px_-8px_rgba(0,0,0,0.5)]" : "border-white/10"
       )}
     >
       {children}
@@ -94,8 +94,8 @@ function NavLinksInner({ nav }: { nav: NavItem[] }) {
             aria-current={active ? "page" : undefined}
             className={cn(
               "relative flex h-full items-center text-sm font-medium transition-colors",
-              active ? "text-slate-900" : "text-slate-500 hover:text-slate-900",
-              "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-left after:rounded-full after:bg-brand-600 after:transition-transform after:duration-300",
+              active ? "text-white" : "text-slate-400 hover:text-white",
+              "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-left after:rounded-full after:bg-brand-400 after:transition-transform after:duration-300",
               active ? "after:scale-x-100" : "after:scale-x-0 hover:after:scale-x-100"
             )}
           >
@@ -143,10 +143,10 @@ export function CategoryMenu({ categories }: { categories: Cat[] }) {
         aria-haspopup="true"
         className={cn(
           "flex h-full items-center gap-2 pr-1 text-sm font-semibold transition-colors",
-          open ? "text-brand-700" : "text-slate-900 hover:text-brand-700"
+          open ? "text-brand-400" : "text-white hover:text-brand-400"
         )}
       >
-        <span className={cn("flex h-7 w-7 items-center justify-center rounded-lg transition", open ? "bg-brand-600 text-white" : "bg-slate-100 text-slate-700")}>
+        <span className={cn("flex h-7 w-7 items-center justify-center rounded-lg transition", open ? "bg-brand-400 text-slate-950" : "bg-white/10 text-white")}>
           <LayoutGrid className="h-4 w-4" />
         </span>
         All categories
@@ -155,7 +155,7 @@ export function CategoryMenu({ categories }: { categories: Cat[] }) {
 
       {open && categories.length > 0 && (
         <div className="animate-in absolute top-full left-0 z-50 pt-2">
-          <div className="flex w-[680px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10">
+          <div className="flex w-[680px] overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl shadow-black/30">
             <ul className="w-64 shrink-0 border-r border-slate-100 p-2">
               {categories.map((c, i) => (
                 <li key={c.slug}>
@@ -263,7 +263,7 @@ export function SearchBar({ compact }: { compact?: boolean }) {
       }}
       className={cn("relative w-full", !compact && "max-w-2xl")}
     >
-      <div className="group flex items-center rounded-xl border border-slate-200 bg-slate-50 transition focus-within:border-brand-500 focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(99,102,241,0.12)] hover:border-slate-300">
+      <div className="group flex items-center rounded-xl border border-transparent bg-white text-slate-900 transition focus-within:border-brand-400 focus-within:shadow-[0_0_0_4px_rgba(245,211,58,0.35)]">
         <span className="pl-4 text-slate-400">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
         </span>
@@ -290,13 +290,13 @@ export function SearchBar({ compact }: { compact?: boolean }) {
             <X className="h-4 w-4" />
           </button>
         )}
-        <button type="submit" className="m-1 hidden rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600 sm:block">
+        <button type="submit" className="m-1 hidden rounded-lg bg-brand-400 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-brand-300 sm:block">
           Search
         </button>
       </div>
 
       {open && q.trim().length >= 2 && (
-        <div className="animate-in absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10">
+        <div className="animate-in absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl shadow-black/30">
           {cats.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-100 p-3">
               <span className="mr-1 text-xs font-medium text-slate-400">Categories:</span>
@@ -352,7 +352,7 @@ export function SearchBar({ compact }: { compact?: boolean }) {
 function CountBadge({ n }: { n: number }) {
   if (!n) return null;
   return (
-    <span className="absolute -top-1.5 -right-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white ring-2 ring-white">
+    <span className="absolute -top-1.5 -right-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand-400 px-1 text-[10px] font-bold text-slate-950 ring-2 ring-slate-950">
       {n > 99 ? "99+" : n}
     </span>
   );
@@ -374,15 +374,15 @@ function ActionItem({
   label: string;
 }) {
   return (
-    <Link href={href} aria-label={label} className="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition hover:bg-slate-100 xl:px-3">
-      <span className="relative text-slate-700 transition group-hover:text-brand-600">
+    <Link href={href} aria-label={label} className="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition hover:bg-white/10 xl:px-3">
+      <span className="relative text-slate-200 transition group-hover:text-brand-400">
         <Icon className="h-[22px] w-[22px]" strokeWidth={1.75} />
         <CountBadge n={count ?? 0} />
       </span>
       {(top || bottom) && (
         <span className="hidden text-left leading-tight xl:block">
           <span className="block text-[11px] text-slate-400">{top}</span>
-          <span className="block text-sm font-semibold text-slate-900">{bottom}</span>
+          <span className="block text-sm font-semibold text-white">{bottom}</span>
         </span>
       )}
     </Link>
@@ -405,24 +405,24 @@ export function HeaderActions({ user }: { user: HeaderUser }) {
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
           aria-label="Account menu"
-          className="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition hover:bg-slate-100 xl:px-3"
+          className="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition hover:bg-white/10 xl:px-3"
         >
           {user ? (
             <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-xs font-bold text-white">
               {user.name.charAt(0).toUpperCase()}
             </span>
           ) : (
-            <User className="h-[22px] w-[22px] text-slate-700 group-hover:text-brand-600" strokeWidth={1.75} />
+            <User className="h-[22px] w-[22px] text-slate-200 group-hover:text-brand-400" strokeWidth={1.75} />
           )}
           <span className="hidden text-left leading-tight xl:block">
             <span className="block text-[11px] text-slate-400">{user ? `Hello, ${user.name.split(" ")[0]}` : "Welcome"}</span>
-            <span className="flex items-center gap-0.5 text-sm font-semibold text-slate-900">
+            <span className="flex items-center gap-0.5 text-sm font-semibold text-white">
               {user ? "My account" : "Sign in"} <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
             </span>
           </span>
         </button>
         {open && (
-          <div className="animate-in absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10">
+          <div className="animate-in absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl shadow-black/30">
             {user ? (
               <>
                 <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3.5">
@@ -519,12 +519,14 @@ export function MobileMenu({
   user,
   storeName,
   phone,
+  hasDeals,
 }: {
   nav: NavItem[];
   categories: Cat[];
   user: HeaderUser;
   storeName: string;
   phone: string;
+  hasDeals?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -579,14 +581,12 @@ export function MobileMenu({
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-100 px-4">
-          <Link href="/" onClick={close} className="flex items-center gap-2.5 font-extrabold">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white">
-              <ShoppingBag className="h-[18px] w-[18px]" />
-            </span>
-            <span className="text-lg tracking-tight">{storeName}</span>
+        <div className="flex h-16 shrink-0 items-center justify-between bg-slate-950 px-4">
+          <Link href="/" onClick={close} className="flex items-center" aria-label={`${storeName} — home`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.webp" alt={storeName} width={700} height={138} className="h-8 w-auto" />
           </Link>
-          <button ref={closeRef} onClick={close} className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100" aria-label="Close menu">
+          <button ref={closeRef} onClick={close} className="flex h-10 w-10 items-center justify-center rounded-xl text-white hover:bg-white/10" aria-label="Close menu">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -594,7 +594,7 @@ export function MobileMenu({
         <div className="flex-1 overflow-y-auto overscroll-contain">
           <div className="p-4">
             {user ? (
-              <Link href="/account" onClick={close} className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-brand-50 to-fuchsia-50 p-3.5 ring-1 ring-brand-100">
+              <Link href="/account" onClick={close} className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-brand-50 to-amber-50 p-3.5 ring-1 ring-brand-100">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 font-bold text-white">
                   {user.name.charAt(0).toUpperCase()}
                 </span>
@@ -670,10 +670,12 @@ export function MobileMenu({
               </div>
             )}
 
+            {hasDeals && (
             <Link href="/products?sale=1&sort=discount" onClick={close} className="mt-1 flex items-center justify-between rounded-xl bg-red-50 px-3 py-3 text-[15px] font-semibold text-red-600">
               <span>🔥 Hot deals</span>
               <ChevronRight className="h-4 w-4" />
             </Link>
+            )}
           </nav>
 
           <div className="mt-4 border-t border-slate-100 px-3 py-3">
@@ -715,7 +717,7 @@ export function MobileMenu({
     <>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="-ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-800 transition hover:bg-slate-100 active:scale-95 lg:hidden"
+        className="-ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white transition hover:bg-white/10 active:scale-95 lg:hidden"
         aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
       >

@@ -25,14 +25,16 @@ function refreshAll() {
   revalidatePath("/", "layout");
 }
 
-async function uniqueSlug(model: "product" | "category", base: string, excludeId?: string) {
+async function uniqueSlug(model: "product" | "category" | "brand", base: string, excludeId?: string) {
   let slug = base || "item";
   let i = 1;
   while (true) {
     const found =
       model === "product"
         ? await db.product.findUnique({ where: { slug } })
-        : await db.category.findUnique({ where: { slug } });
+        : model === "brand"
+          ? await db.brand.findUnique({ where: { slug } })
+          : await db.category.findUnique({ where: { slug } });
     if (!found || found.id === excludeId) return slug;
     slug = `${base}-${++i}`;
   }
@@ -90,6 +92,7 @@ export async function saveProduct(id: string | null, _: FormState, fd: FormData)
     stock: Math.floor(stock),
     sku: str(fd, "sku") || null,
     categoryId: str(fd, "categoryId") || null,
+    brandId: str(fd, "brandId") || null,
     images: JSON.stringify(images),
     featured: fd.get("featured") === "on",
     active: fd.get("active") === "on",
@@ -191,6 +194,10 @@ export async function bulkProducts(_: FormState, fd: FormData): Promise<FormStat
       await db.product.updateMany({ where, data: { categoryId: value || null } });
       msg = `Moved ${n} to a new category`;
       break;
+    case "brand":
+      await db.product.updateMany({ where, data: { brandId: value || null } });
+      msg = `Changed the brand of ${n}`;
+      break;
     case "set_stock":
     case "add_stock": {
       const v = Math.floor(Number(value));
@@ -258,6 +265,7 @@ export type ImportRow = {
   stock?: string;
   sku?: string;
   category?: string;
+  brand?: string;
   images?: string;
   featured?: string;
   active?: string;
@@ -270,6 +278,8 @@ export async function importProducts(rows: ImportRow[], mode: "upsert" | "create
   let updated = 0;
   const errors: string[] = [];
   const catCache = new Map<string, string>();
+  const brandCache = new Map<string, string>();
+  for (const b of await db.brand.findMany()) brandCache.set(b.name.toLowerCase(), b.id);
 
   for (const c of await db.category.findMany()) catCache.set(c.name.toLowerCase(), c.id);
 
@@ -297,6 +307,16 @@ export async function importProducts(rows: ImportRow[], mode: "upsert" | "create
         categoryId = c.id;
       }
     }
+    let brandId: string | null = null;
+    const brandName = (r.brand || "").trim();
+    if (brandName) {
+      brandId = brandCache.get(brandName.toLowerCase()) ?? null;
+      if (!brandId) {
+        const b = await db.brand.create({ data: { name: brandName, slug: await uniqueSlug("brand", slugify(brandName)) } });
+        brandCache.set(brandName.toLowerCase(), b.id);
+        brandId = b.id;
+      }
+    }
     const compare = Number(r.compareprice);
     const data = {
       name,
@@ -306,6 +326,7 @@ export async function importProducts(rows: ImportRow[], mode: "upsert" | "create
       stock: Math.max(0, Math.floor(Number(r.stock) || 0)),
       sku: r.sku?.trim() || null,
       categoryId,
+      brandId,
       images: JSON.stringify((r.images || "").split(/[|;]/).map((s) => s.trim()).filter(Boolean)),
       featured: truthy(r.featured),
       active: r.active === undefined || r.active === "" ? true : truthy(r.active),
@@ -358,6 +379,32 @@ export async function deleteCategory(id: string) {
   const me = await requirePerm("categories");
   const c = await db.category.delete({ where: { id } });
   await logActivity(me, "deleted", "category", `Deleted category "${c.name}"`);
+  refreshAll();
+}
+
+/* ================= Brands ================= */
+
+export async function saveBrand(id: string | null, _: FormState, fd: FormData): Promise<FormState> {
+  const me = await requirePerm("categories");
+  const name = str(fd, "name");
+  if (!name) return { error: "Brand name is required." };
+  const data = {
+    name,
+    slug: await uniqueSlug("brand", slugify(str(fd, "slug") || name), id ?? undefined),
+    description: str(fd, "description") || null,
+    logo: str(fd, "logo") || null,
+  };
+  if (id) await db.brand.update({ where: { id }, data });
+  else await db.brand.create({ data });
+  await logActivity(me, id ? "updated" : "created", "brand", `${id ? "Updated" : "Created"} brand "${name}"`);
+  refreshAll();
+  redirect("/admin/brands");
+}
+
+export async function deleteBrand(id: string) {
+  const me = await requirePerm("categories");
+  const b = await db.brand.delete({ where: { id } });
+  await logActivity(me, "deleted", "brand", `Deleted brand "${b.name}" (its products were kept, without a brand)`);
   refreshAll();
 }
 

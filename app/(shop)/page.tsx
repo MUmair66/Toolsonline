@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Quote, Sparkles, Star, Timer, Truck } from "lucide-react";
+import { ArrowRight, BadgeCheck, Banknote, Quote, ShieldCheck, Star, Timer, Truck, Wrench } from "lucide-react";
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { visibleWhere, withRatings } from "@/lib/products";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, parseImages } from "@/lib/utils";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { Newsletter } from "@/components/shop/Newsletter";
 import { SafeImage } from "@/components/ui/SafeImage";
@@ -27,11 +27,11 @@ function SectionHeader({ title, subtitle, href, cta = "View all" }: { title: str
 export default async function HomePage() {
   const settings = await getSettings();
   const base = visibleWhere(settings);
-  const [featuredRaw, latestRaw, categories, saleRaw, stats, reviews, productCount] = await Promise.all([
-    db.product.findMany({ where: { ...base, featured: true }, include: { category: true }, take: 8, orderBy: { createdAt: "desc" } }),
-    db.product.findMany({ where: base, include: { category: true }, take: 8, orderBy: { createdAt: "desc" } }),
+  const [featuredRaw, latestRaw, categories, saleRaw, stats, reviews, productCount, brands] = await Promise.all([
+    db.product.findMany({ where: { ...base, featured: true }, include: { category: true, brand: true }, take: 8, orderBy: { price: "asc" } }),
+    db.product.findMany({ where: base, include: { category: true, brand: true }, take: 8, orderBy: { createdAt: "desc" } }),
     db.category.findMany({ include: { _count: { select: { products: { where: base } } } }, orderBy: { name: "asc" } }),
-    db.product.findMany({ where: { ...base, comparePrice: { not: null } }, include: { category: true }, take: 4 }),
+    db.product.findMany({ where: { ...base, comparePrice: { not: null } }, include: { category: true, brand: true }, take: 4 }),
     db.review.aggregate({ where: { approved: true }, _avg: { rating: true }, _count: true }),
     db.review.findMany({
       where: { approved: true, rating: { gte: 4 } },
@@ -40,32 +40,40 @@ export default async function HomePage() {
       take: 3,
     }),
     db.product.count({ where: base }),
+    db.brand.findMany({ include: { _count: { select: { products: { where: base } } } }, orderBy: { name: "asc" } }),
   ]);
   const [featured, latest, sale] = await Promise.all([withRatings(featuredRaw), withRatings(latestRaw), withRatings(saleRaw)]);
   const bestDeal = Math.max(0, ...saleRaw.map((p) => (p.comparePrice ? Math.round((1 - p.price / p.comparePrice) * 100) : 0)));
+  const shownCategories = categories.filter((c) => c._count.products > 0);
+  const shownBrands = brands.filter((b) => b._count.products > 0);
+  const heroShots = featuredRaw.map((p) => ({ name: p.name, slug: p.slug, img: parseImages(p.images)[0] })).filter((p) => p.img).slice(0, 3);
+  const cheapest = await db.product.aggregate({ where: { ...base, price: { gt: 0 } }, _min: { price: true } });
 
   return (
     <>
       {/* Hero */}
       <section className="relative overflow-hidden bg-slate-950">
-        <div className="pointer-events-none absolute -top-40 -right-40 h-[32rem] w-[32rem] rounded-full bg-brand-600/30 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-40 -left-20 h-96 w-96 rounded-full bg-fuchsia-500/20 blur-3xl" />
-        <div className="container-x relative grid items-center gap-12 py-16 lg:grid-cols-2 lg:py-24">
+        <div className="pointer-events-none absolute -top-40 -right-40 h-[32rem] w-[32rem] rounded-full bg-brand-400/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-40 -left-20 h-96 w-96 rounded-full bg-brand-600/25 blur-3xl" />
+        <div className="container-x relative grid items-center gap-12 py-14 lg:grid-cols-2 lg:py-20">
           <div className="text-white">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5 text-amber-300" /> New season collection is here
+            <span className="inline-flex items-center gap-2 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-1 text-xs font-semibold text-brand-300">
+              <Wrench className="h-3.5 w-3.5" /> {settings.tagline}
             </span>
             <h1 className="mt-6 text-4xl leading-[1.1] font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-              Everything you love,{" "}
-              <span className="bg-gradient-to-r from-brand-100 via-white to-fuchsia-200 bg-clip-text text-transparent">delivered.</span>
+              Professional power tools,{" "}
+              <span className="text-brand-400">delivered to your door.</span>
             </h1>
-            <p className="mt-5 max-w-lg text-lg text-slate-300">{settings.tagline} Curated electronics, fashion, home and beauty — at prices you&apos;ll smile about.</p>
+            <p className="mt-5 max-w-lg text-lg text-slate-300">
+              Grinders, drills, hammers, cutters, welding machines and more{shownBrands.length ? ` from ${shownBrands.map((b) => b.name).join(", ")}` : ""}
+              {cheapest._min.price ? ` — starting at ${formatPrice(cheapest._min.price, settings.currency)}` : ""}.
+            </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/products" className="btn-primary !px-6 !py-3 !text-base shadow-lg shadow-brand-600/30">
-                Shop now <ArrowRight className="h-4 w-4" />
+              <Link href="/products" className="btn !bg-brand-400 !px-6 !py-3 !text-base !text-slate-950 shadow-lg shadow-brand-400/20 hover:!bg-brand-300">
+                Shop all tools <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/products?sale=1" className="btn !border !border-white/20 !px-6 !py-3 !text-base text-white hover:bg-white/10">
-                View deals
+              <Link href="/categories" className="btn !border !border-white/20 !px-6 !py-3 !text-base text-white hover:bg-white/10">
+                Browse categories
               </Link>
             </div>
             <dl className="mt-10 grid max-w-md grid-cols-3 gap-6 border-t border-white/10 pt-8">
@@ -74,59 +82,81 @@ export default async function HomePage() {
                 <dd className="mt-1 text-2xl font-bold">{productCount.toLocaleString()}</dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-400">Average rating</dt>
-                <dd className="mt-1 flex items-center gap-1 text-2xl font-bold">
-                  {(stats._avg.rating ?? 4.8).toFixed(1)} <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
-                </dd>
+                <dt className="text-xs text-slate-400">Categories</dt>
+                <dd className="mt-1 text-2xl font-bold">{shownCategories.length}</dd>
               </div>
-              <div>
-                <dt className="text-xs text-slate-400">Free shipping</dt>
-                <dd className="mt-1 text-2xl font-bold">{settings.freeShippingThreshold > 0 ? `${formatPrice(settings.freeShippingThreshold, settings.currency).replace(/\.00$/, "")}+` : "Always"}</dd>
-              </div>
+              {stats._count > 0 ? (
+                <div>
+                  <dt className="text-xs text-slate-400">Average rating</dt>
+                  <dd className="mt-1 flex items-center gap-1 text-2xl font-bold">
+                    {(stats._avg.rating ?? 0).toFixed(1)} <Star className="h-5 w-5 fill-brand-400 text-brand-400" />
+                  </dd>
+                </div>
+              ) : (
+                <div>
+                  <dt className="text-xs text-slate-400">Payment</dt>
+                  <dd className="mt-1 text-2xl font-bold">COD</dd>
+                </div>
+              )}
             </dl>
           </div>
-          <div className="relative hidden lg:block">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-4 pt-10">
-                <div className="aspect-[3/4] overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/10">
-                  <SafeImage src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80&auto=format&fit=crop" alt="Store" className="h-full w-full object-cover" />
-                </div>
+
+          {heroShots.length > 0 && (
+            <div className="relative hidden lg:block">
+              <div className="grid grid-cols-2 gap-4">
+                {heroShots.map((p, i) => (
+                  <Link
+                    key={p.slug}
+                    href={`/products/${p.slug}`}
+                    className={`group overflow-hidden rounded-3xl bg-white p-4 shadow-2xl ring-1 ring-white/10 ${i === 0 ? "row-span-2 flex items-center" : "aspect-square"}`}
+                  >
+                    <SafeImage src={p.img} alt={p.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
+                  </Link>
+                ))}
               </div>
-              <div className="space-y-4">
-                <div className="aspect-square overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/10">
-                  <SafeImage src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80&auto=format&fit=crop" alt="Headphones" className="h-full w-full object-cover" />
-                </div>
-                <div className="aspect-square overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/10">
-                  <SafeImage src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80&auto=format&fit=crop" alt="Sneakers" className="h-full w-full object-cover" />
+              <div className="absolute bottom-6 -left-6 flex items-center gap-3 rounded-2xl bg-white p-4 shadow-2xl">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100"><Banknote className="h-5 w-5 text-brand-700" /></span>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">Cash on delivery</p>
+                  <p className="text-xs text-slate-500">Pay when your tools arrive</p>
                 </div>
               </div>
             </div>
-            <div className="absolute bottom-8 -left-6 flex items-center gap-3 rounded-2xl bg-white p-4 shadow-2xl">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100"><Truck className="h-5 w-5 text-emerald-600" /></span>
-              <div>
-                <p className="text-sm font-bold text-slate-900">Fast delivery</p>
-                <p className="text-xs text-slate-500">Ships within 24 hours</p>
-              </div>
-            </div>
-          </div>
+          )}
+        </div>
+      </section>
+
+      {/* Trust strip */}
+      <section className="border-b border-slate-200 bg-white">
+        <div className="container-x grid grid-cols-1 gap-4 py-5 text-sm sm:grid-cols-3">
+          {[
+            { icon: Truck, text: settings.freeShippingThreshold > 0 ? `Free delivery on orders over ${formatPrice(settings.freeShippingThreshold, settings.currency)}` : "Delivery across the country" },
+            { icon: Banknote, text: "Cash on delivery available" },
+            { icon: ShieldCheck, text: "Secure checkout" },
+          ].map((t) => (
+            <p key={t.text} className="flex items-center justify-center gap-2 font-medium text-slate-700">
+              <t.icon className="h-5 w-5 text-brand-600" /> {t.text}
+            </p>
+          ))}
         </div>
       </section>
 
       {/* Categories */}
-      {categories.length > 0 && (
-        <section className="container-x py-16">
-          <SectionHeader title="Shop by category" subtitle="Find exactly what you're looking for" href="/categories" />
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-            {categories.map((c) => (
-              <Link key={c.id} href={`/products?category=${c.slug}`} className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-slate-100">
-                <SafeImage src={c.image} alt={c.name} className="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-                <div className="absolute inset-x-3 bottom-3 text-white">
-                  <p className="font-semibold">{c.name}</p>
-                  <p className="flex items-center gap-1 text-xs text-white/80">
-                    {c._count.products} products <ArrowRight className="h-3 w-3 -translate-x-1 opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100" />
-                  </p>
+      {shownCategories.length > 0 && (
+        <section className="container-x py-14">
+          <SectionHeader title="Shop by category" subtitle="Find the right tool for the job" href="/categories" />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+            {shownCategories.map((c) => (
+              <Link
+                key={c.id}
+                href={`/products?category=${c.slug}`}
+                className="group flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-4 text-center transition hover:-translate-y-0.5 hover:border-brand-400 hover:shadow-lg"
+              >
+                <div className="aspect-square w-full max-w-[150px]">
+                  <SafeImage src={c.image} alt={c.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
                 </div>
+                <p className="mt-3 text-sm font-semibold text-slate-900 group-hover:text-brand-600">{c.name}</p>
+                <p className="text-xs text-slate-500">{c._count.products} products</p>
               </Link>
             ))}
           </div>
@@ -136,24 +166,24 @@ export default async function HomePage() {
       {/* Featured */}
       {featured.length > 0 && (
         <section className="container-x py-8">
-          <SectionHeader title="Trending now" subtitle="Our most-loved products this week" href="/products?featured=1" />
+          <SectionHeader title="Bestsellers" subtitle="Popular tools picked by our team" href="/products?featured=1" />
           <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-6 lg:grid-cols-4">
             {featured.map((p) => <ProductCard key={p.id} product={p} currency={settings.currency} />)}
           </div>
         </section>
       )}
 
-      {/* Deals band */}
+      {/* Deals band (only when something is on sale) */}
       {sale.length > 0 && (
         <section className="mt-16 bg-gradient-to-br from-rose-50 via-white to-amber-50 py-16">
           <div className="container-x">
             <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
               <div>
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
-                  <Timer className="h-3.5 w-3.5" /> Limited-time deals
+                  <Timer className="h-3.5 w-3.5" /> Deals
                 </span>
-                <h2 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">Save up to {bestDeal}% today</h2>
-                <p className="mt-1 text-slate-500">Hand-picked discounts — while stocks last.</p>
+                <h2 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">Save up to {bestDeal}%</h2>
+                <p className="mt-1 text-slate-500">Discounted tools — while stocks last.</p>
               </div>
               <Link href="/products?sale=1&sort=discount" className="btn-primary">Shop all deals <ArrowRight className="h-4 w-4" /></Link>
             </div>
@@ -164,19 +194,41 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Promo banner */}
-      <section className="container-x py-16">
-        <div className="relative overflow-hidden rounded-3xl bg-brand-600 px-6 py-12 text-white sm:px-12">
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-white/10" />
-          <div className="absolute right-40 -bottom-24 h-48 w-48 rounded-full bg-white/10" />
+      {/* Shop by brand */}
+      {shownBrands.length > 0 && (
+        <section className="container-x py-14">
+          <SectionHeader title="Shop by brand" subtitle="Genuine tools from the brands we stock" />
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {shownBrands.map((b) => (
+              <Link
+                key={b.id}
+                href={`/products?brand=${b.slug}`}
+                className="group flex items-center justify-between gap-3 rounded-2xl bg-slate-950 p-5 text-white transition hover:-translate-y-0.5 hover:shadow-xl"
+              >
+                {b.logo ? (
+                  <SafeImage src={b.logo} alt={b.name} className="h-10 w-auto object-contain" />
+                ) : (
+                  <span className="text-2xl font-black tracking-tight text-brand-400">{b.name}</span>
+                )}
+                <span className="text-right text-xs text-slate-400">
+                  {b._count.products} products
+                  <ArrowRight className="ml-auto mt-1 h-4 w-4 text-brand-400 transition group-hover:translate-x-1" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Help banner */}
+      <section className="container-x py-8">
+        <div className="relative overflow-hidden rounded-3xl bg-brand-400 px-6 py-10 text-slate-950 sm:px-12">
+          <Wrench className="pointer-events-none absolute -right-6 -bottom-8 h-48 w-48 rotate-12 text-slate-950/10" />
           <div className="relative max-w-xl">
-            <p className="text-sm font-semibold tracking-wider text-brand-100 uppercase">New here?</p>
-            <h2 className="mt-2 text-3xl font-extrabold sm:text-4xl">Get 10% off your first order</h2>
-            <p className="mt-3 text-brand-100">
-              Use code <span className="rounded bg-white/20 px-2 py-0.5 font-mono font-bold text-white">WELCOME10</span> at checkout.
-            </p>
-            <Link href="/products" className="btn mt-6 bg-white !px-6 !py-3 text-brand-700 hover:bg-brand-50">
-              Start shopping <ArrowRight className="h-4 w-4" />
+            <p className="text-sm font-bold tracking-wider uppercase">Not sure which tool you need?</p>
+            <h2 className="mt-2 text-3xl font-extrabold sm:text-4xl">Tell us about the job — we&apos;ll help you choose.</h2>
+            <Link href="/contact" className="btn mt-6 bg-slate-950 !px-6 !py-3 text-white hover:bg-slate-800">
+              Contact us <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
@@ -184,7 +236,7 @@ export default async function HomePage() {
 
       {/* New arrivals */}
       <section className="container-x py-8">
-        <SectionHeader title="New arrivals" subtitle="Fresh additions to our store" href="/products?sort=newest" />
+        <SectionHeader title="New arrivals" subtitle="The latest additions to our catalog" href="/products?sort=newest" />
         {latest.length ? (
           <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-6 lg:grid-cols-4">
             {latest.map((p) => <ProductCard key={p.id} product={p} currency={settings.currency} />)}
@@ -194,10 +246,10 @@ export default async function HomePage() {
         )}
       </section>
 
-      {/* Testimonials */}
+      {/* Testimonials (only real reviews) */}
       {reviews.length > 0 && (
         <section className="container-x py-16">
-          <SectionHeader title="Loved by our customers" subtitle={`${stats._count} verified reviews · ${(stats._avg.rating ?? 0).toFixed(1)} average rating`} />
+          <SectionHeader title="What customers say" subtitle={`${stats._count} reviews · ${(stats._avg.rating ?? 0).toFixed(1)} average rating`} />
           <div className="grid gap-6 md:grid-cols-3">
             {reviews.map((r) => (
               <figure key={r.id} className="card relative p-6">
@@ -220,11 +272,11 @@ export default async function HomePage() {
       )}
 
       {/* Newsletter */}
-      <section className="container-x pb-4">
+      <section className="container-x pt-8 pb-4">
         <div className="flex flex-col items-center gap-6 rounded-3xl bg-slate-100 px-6 py-12 text-center">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Join the {settings.storeName} club</h2>
-            <p className="mt-2 text-slate-600">Early access to sales, new arrivals and members-only coupons. No spam, ever.</p>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Get new arrivals and offers first</h2>
+            <p className="mt-2 text-slate-600">Join the {settings.storeName} mailing list. No spam.</p>
           </div>
           <Newsletter />
         </div>

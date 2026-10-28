@@ -10,8 +10,8 @@ export async function GET(req: Request) {
   const settings = await getSettings();
   const [products, categories] = await Promise.all([
     db.product.findMany({
-      where: { ...visibleWhere(settings), OR: [{ name: { contains: q, mode: "insensitive" } }, { description: { contains: q, mode: "insensitive" } }, { sku: { contains: q, mode: "insensitive" } }] },
-      include: { category: { select: { name: true } } },
+      where: { ...visibleWhere(settings), OR: [{ name: { contains: q, mode: "insensitive" } }, { description: { contains: q, mode: "insensitive" } }, { sku: { contains: q, mode: "insensitive" } }, { brand: { name: { contains: q, mode: "insensitive" } } }] },
+      include: { category: { select: { name: true } }, brand: { select: { name: true } } },
       orderBy: [{ featured: "desc" }, { name: "asc" }],
       take: 6,
     }),
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
       price: p.price,
       comparePrice: p.comparePrice,
       image: parseImages(p.images)[0] ?? "",
-      category: p.category?.name ?? null,
+      category: [p.brand?.name, p.category?.name].filter(Boolean).join(" · ") || null,
     })),
     categories: categories.map((c) => ({ name: c.name, slug: c.slug })),
   });

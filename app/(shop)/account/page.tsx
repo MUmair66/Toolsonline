@@ -39,10 +39,10 @@ export default async function AccountOverview() {
   const catIds = [...new Set(purchased.map((p) => p.product?.categoryId).filter(Boolean))] as string[];
 
   const [buyAgainRaw, recommendedRaw] = await Promise.all([
-    db.product.findMany({ where: { ...base, id: { in: purchasedIds } }, include: { category: true }, take: 4 }),
+    db.product.findMany({ where: { ...base, id: { in: purchasedIds } }, include: { category: true, brand: true }, take: 4 }),
     db.product.findMany({
       where: { ...base, id: { notIn: purchasedIds }, ...(catIds.length ? { categoryId: { in: catIds } } : { featured: true }) },
-      include: { category: true },
+      include: { category: true, brand: true },
       orderBy: { createdAt: "desc" },
       take: 4,
     }),

@@ -9,8 +9,8 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
   const list = images.length ? images : [""];
   return (
     <div className="space-y-3">
-      <div className="aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
-        <SafeImage src={list[active]} alt={name} className="h-full w-full object-cover" />
+      <div className="aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <SafeImage src={list[active]} alt={name} className="h-full w-full object-contain" />
       </div>
       {list.length > 1 && (
         <div className="grid grid-cols-5 gap-3">

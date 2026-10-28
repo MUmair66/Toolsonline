@@ -71,7 +71,7 @@ export function ProductImporter() {
             }}
             rows={6}
             className="input font-mono text-xs"
-            placeholder={"name,price,stock,category\nBlue Mug,12.99,40,Home & Living"}
+            placeholder={"name,price,stock,brand,category\nBosch GWS 750 Angle Grinder,8500,10,Bosch,Grinders"}
           />
         </div>
 
@@ -93,7 +93,7 @@ export function ProductImporter() {
             <div className="max-h-96 overflow-auto">
               <table className="table-base">
                 <thead className="sticky top-0">
-                  <tr><th>#</th><th>Name</th><th>Price</th><th>Stock</th><th>SKU</th><th>Category</th><th>Status</th></tr>
+                  <tr><th>#</th><th>Name</th><th>Price</th><th>Stock</th><th>SKU</th><th>Brand</th><th>Category</th><th>Status</th></tr>
                 </thead>
                 <tbody>
                   {rows.slice(0, 200).map((r, i) => (
@@ -103,6 +103,7 @@ export function ProductImporter() {
                       <td>{r.price}</td>
                       <td>{r.stock || "0"}</td>
                       <td className="text-slate-500">{r.sku}</td>
+                      <td className="text-slate-500">{r.brand}</td>
                       <td className="text-slate-500">{r.category}</td>
                       <td>
                         {issues[i] ? (
@@ -174,7 +175,7 @@ export function ProductImporter() {
             <li><code className="text-brand-700">name</code>, <code className="text-brand-700">price</code> — required</li>
             <li><code>description</code>, <code>comparePrice</code> (original price for sales)</li>
             <li><code>stock</code>, <code>sku</code> (used to match existing products)</li>
-            <li><code>category</code> — name; created automatically if new</li>
+            <li><code>brand</code>, <code>category</code> — names; created automatically if new</li>
             <li><code>images</code> — URLs separated by <code>|</code></li>
             <li><code>featured</code>, <code>active</code> — true / false</li>
           </ul>

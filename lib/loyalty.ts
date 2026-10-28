@@ -1,10 +1,11 @@
-// Loyalty tiers based on lifetime spend (non-cancelled orders). 1 point per whole currency unit spent.
+// Loyalty tiers based on lifetime spend in PKR (non-cancelled orders). 1 point per rupee spent.
+// Tiers are recognition only — add real perks here once the store decides to offer them.
 
 export const TIERS = [
-  { name: "Bronze", min: 0, color: "from-amber-700 to-amber-900", perk: "Member-only deals" },
-  { name: "Silver", min: 200, color: "from-slate-400 to-slate-600", perk: "Early access to sales" },
-  { name: "Gold", min: 500, color: "from-yellow-400 to-amber-600", perk: "Free express shipping" },
-  { name: "Platinum", min: 1000, color: "from-indigo-500 to-fuchsia-600", perk: "Priority support & gifts" },
+  { name: "Bronze", min: 0, color: "from-amber-700 to-amber-900", perk: "Welcome to Toolsonline" },
+  { name: "Silver", min: 25000, color: "from-slate-400 to-slate-600", perk: "Regular customer" },
+  { name: "Gold", min: 75000, color: "from-yellow-400 to-amber-600", perk: "Valued customer" },
+  { name: "Platinum", min: 200000, color: "from-slate-800 to-slate-950", perk: "Top customer" },
 ] as const;
 
 export function loyalty(spent: number) {

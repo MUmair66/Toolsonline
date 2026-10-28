@@ -17,12 +17,15 @@ type P = {
   stock: number;
   sku: string | null;
   categoryId: string | null;
+  brandId: string | null;
   images: string[];
   featured: boolean;
   active: boolean;
 };
 
-export function ProductForm({ product, categories }: { product?: P; categories: { id: string; name: string }[] }) {
+type Option = { id: string; name: string };
+
+export function ProductForm({ product, categories, brands }: { product?: P; categories: Option[]; brands: Option[] }) {
   const [state, action] = useActionState(saveProduct.bind(null, product?.id ?? null), undefined);
 
   return (
@@ -53,7 +56,7 @@ export function ProductForm({ product, categories }: { product?: P; categories: 
         <section className="card grid gap-4 p-6 sm:grid-cols-2">
           <h2 className="font-semibold sm:col-span-2">Pricing & inventory</h2>
           <div>
-            <label className="label" htmlFor="price">Price *</label>
+            <label className="label" htmlFor="price">Price (Rs.) *</label>
             <input id="price" name="price" type="number" step="0.01" min="0" defaultValue={product?.price} required className="input" />
           </div>
           <div>
@@ -74,6 +77,13 @@ export function ProductForm({ product, categories }: { product?: P; categories: 
       <div className="space-y-6">
         <section className="card space-y-4 p-6">
           <h2 className="font-semibold">Organization</h2>
+          <div>
+            <label className="label" htmlFor="brandId">Brand</label>
+            <select id="brandId" name="brandId" defaultValue={product?.brandId ?? ""} className="input">
+              <option value="">No brand</option>
+              {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          </div>
           <div>
             <label className="label" htmlFor="categoryId">Category</label>
             <select id="categoryId" name="categoryId" defaultValue={product?.categoryId ?? ""} className="input">

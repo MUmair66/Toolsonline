@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { saveAutomations, saveCategory, saveCoupon, saveCustomer, saveSettings, saveTeamMember, updateOrder } from "@/actions/admin";
+import { saveAutomations, saveBrand, saveCategory, saveCoupon, saveCustomer, saveSettings, saveTeamMember, updateOrder } from "@/actions/admin";
 import { Wand2 } from "lucide-react";
 import { PERMISSIONS } from "@/lib/permissions";
 import { useState } from "react";
@@ -388,6 +388,35 @@ export function AutomationsForm({
       <div className="space-y-3 p-3">
         <FormMessage state={state} />
         <SubmitButton pendingText="Saving...">Save rules</SubmitButton>
+      </div>
+    </form>
+  );
+}
+
+/* ---------------- Brand ---------------- */
+
+export function BrandForm({
+  brand,
+}: {
+  brand?: { id: string; name: string; slug: string; description: string | null; logo: string | null };
+}) {
+  const [state, action] = useActionState(saveBrand.bind(null, brand?.id ?? null), undefined);
+  return (
+    <form action={action} className="card max-w-2xl space-y-4 p-6">
+      <Field label="Brand name *" name="name" defaultValue={brand?.name} required placeholder="e.g. Bosch" />
+      <Field label="Slug" name="slug" defaultValue={brand?.slug} placeholder="Auto-generated from name" />
+      <div>
+        <label htmlFor="description" className="label">Description</label>
+        <textarea id="description" name="description" rows={3} defaultValue={brand?.description ?? ""} className="input" />
+      </div>
+      <div>
+        <span className="label">Logo</span>
+        <ImageUploader name="logo" initial={brand?.logo ? [brand.logo] : []} multiple={false} />
+      </div>
+      <FormMessage state={state} />
+      <div className="flex gap-2">
+        <SubmitButton pendingText="Saving...">{brand ? "Save changes" : "Create brand"}</SubmitButton>
+        <Link href="/admin/brands" className="btn-secondary">Cancel</Link>
       </div>
     </form>
   );

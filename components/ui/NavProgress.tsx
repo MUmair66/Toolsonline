@@ -42,7 +42,7 @@ function Bar() {
   return (
     <div className="pointer-events-none fixed inset-x-0 top-0 z-[200] h-[3px]" aria-hidden>
       <div
-        className="h-full bg-gradient-to-r from-brand-500 via-fuchsia-500 to-brand-600 shadow-[0_0_10px_rgba(99,102,241,0.7)] transition-[width,opacity] duration-200 ease-out"
+        className="h-full bg-gradient-to-r from-brand-400 via-brand-500 to-brand-600 shadow-[0_0_10px_rgba(245,158,11,0.7)] transition-[width,opacity] duration-200 ease-out"
         style={{ width: `${progress}%`, opacity: visible ? 1 : 0 }}
       />
     </div>

@@ -16,7 +16,7 @@ async function loadSettings() {
  * Store settings. Cached across requests (invalidated via revalidateTag(SETTINGS_TAG) when saved)
  * and de-duplicated within a request, so layout + header + footer + page share one lookup.
  */
-export const getSettings = cache(unstable_cache(loadSettings, ["store-settings"], { tags: [SETTINGS_TAG] }));
+export const getSettings = cache(unstable_cache(loadSettings, ["store-settings-v2"], { tags: [SETTINGS_TAG], revalidate: 300 }));
 
 export type StoreSettings = Awaited<ReturnType<typeof getSettings>>;
 

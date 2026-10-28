@@ -15,7 +15,7 @@ import { Pagination } from "@/components/ui/Pagination";
 
 export const metadata = { title: "Products" };
 
-type SP = { q?: string; category?: string; status?: string; sort?: string; per?: string; page?: string; saved?: string };
+type SP = { q?: string; category?: string; brand?: string; status?: string; sort?: string; per?: string; page?: string; saved?: string };
 
 export default async function AdminProducts({ searchParams }: { searchParams: Promise<SP> }) {
   await requirePerm("products");
@@ -28,6 +28,8 @@ export default async function AdminProducts({ searchParams }: { searchParams: Pr
   if (sp.q) where.OR = [{ name: { contains: sp.q, mode: "insensitive" } }, { sku: { contains: sp.q, mode: "insensitive" } }];
   if (sp.category === "none") where.categoryId = null;
   else if (sp.category) where.categoryId = sp.category;
+  if (sp.brand === "none") where.brandId = null;
+  else if (sp.brand) where.brandId = sp.brand;
   if (sp.status === "active") where.active = true;
   if (sp.status === "inactive") where.active = false;
   if (sp.status === "low") where.stock = { lte: settings.lowStockThreshold };
@@ -44,10 +46,11 @@ export default async function AdminProducts({ searchParams }: { searchParams: Pr
     : sp.sort === "oldest" ? { createdAt: "asc" }
     : { createdAt: "desc" };
 
-  const [total, products, categories, stats] = await Promise.all([
+  const [total, products, categories, brands, stats] = await Promise.all([
     db.product.count({ where }),
-    db.product.findMany({ where, include: { category: true }, orderBy, skip: (page - 1) * perPage, take: perPage }),
+    db.product.findMany({ where, include: { category: true, brand: true }, orderBy, skip: (page - 1) * perPage, take: perPage }),
     db.category.findMany({ orderBy: { name: "asc" } }),
+    db.brand.findMany({ orderBy: { name: "asc" } }),
     db.product.aggregate({ _sum: { stock: true }, _count: true }),
   ]);
   const inventoryValue = (await db.product.findMany({ select: { price: true, stock: true } })).reduce((s, p) => s + p.price * Math.max(0, p.stock), 0);
@@ -66,6 +69,11 @@ export default async function AdminProducts({ searchParams }: { searchParams: Pr
       value: "category",
       label: "Move to category",
       input: { type: "select", options: [{ value: "", label: "Uncategorized" }, ...categories.map((c) => ({ value: c.id, label: c.name }))] },
+    },
+    {
+      value: "brand",
+      label: "Change brand",
+      input: { type: "select", options: [{ value: "", label: "No brand" }, ...brands.map((b) => ({ value: b.id, label: b.name }))] },
     },
     { value: "delete", label: "Delete permanently", danger: true },
   ];
@@ -86,6 +94,11 @@ export default async function AdminProducts({ searchParams }: { searchParams: Pr
       {sp.saved && <p className="mb-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">Product saved successfully.</p>}
 
       <FilterBar q={sp.q} placeholder="Search by name or SKU…">
+        <select name="brand" defaultValue={sp.brand ?? ""} className="input !w-auto">
+          <option value="">All brands</option>
+          <option value="none">No brand</option>
+          {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+        </select>
         <select name="category" defaultValue={sp.category ?? ""} className="input !w-auto">
           <option value="">All categories</option>
           <option value="none">Uncategorized</option>
@@ -133,7 +146,7 @@ export default async function AdminProducts({ searchParams }: { searchParams: Pr
                     <SafeImage src={parseImages(p.images)[0]} alt={p.name} className="h-11 w-11 shrink-0 rounded-lg object-cover" />
                     <div className="min-w-0">
                       <Link href={`/admin/products/${p.id}`} className="line-clamp-1 font-semibold hover:text-brand-600">{p.name}</Link>
-                      <p className="text-xs text-slate-400">{p.sku || "No SKU"}</p>
+                      <p className="text-xs text-slate-400">{[p.brand?.name, p.sku || "No SKU"].filter(Boolean).join(" · ")}</p>
                     </div>
                     {p.featured && <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" aria-label="Featured" />}
                   </div>

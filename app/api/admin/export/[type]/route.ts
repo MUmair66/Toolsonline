@@ -24,10 +24,10 @@ export async function GET(_: Request, { params }: { params: Promise<{ type: stri
   if (type === "template") csv = PRODUCT_CSV_TEMPLATE;
 
   if (type === "products") {
-    const rows = await db.product.findMany({ include: { category: true }, orderBy: { name: "asc" } });
+    const rows = await db.product.findMany({ include: { category: true, brand: true }, orderBy: { name: "asc" } });
     csv = toCSV(
       PRODUCT_CSV_HEADERS,
-      rows.map((p) => [p.name, p.description, p.price, p.comparePrice ?? "", p.stock, p.sku ?? "", p.category?.name ?? "", parseImages(p.images).join("|"), p.featured, p.active])
+      rows.map((p) => [p.name, p.description, p.price, p.comparePrice ?? "", p.stock, p.sku ?? "", p.brand?.name ?? "", p.category?.name ?? "", parseImages(p.images).join("|"), p.featured, p.active])
     );
   }
 

@@ -15,9 +15,22 @@ export type CardProduct = {
   images: string;
   featured?: boolean;
   category?: { name: string } | null;
+  brand?: { name: string } | null;
   rating?: number;
   reviewCount?: number;
 };
+
+function Eyebrow({ product }: { product: CardProduct }) {
+  const parts = [product.brand?.name, product.category?.name].filter(Boolean);
+  if (!parts.length) return null;
+  return (
+    <p className="truncate text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
+      {product.brand && <span className="text-brand-600">{product.brand.name}</span>}
+      {product.brand && product.category && " · "}
+      {product.category?.name}
+    </p>
+  );
+}
 
 function meta(product: CardProduct) {
   const images = parseImages(product.images);
@@ -43,15 +56,15 @@ export function ProductCard({ product, currency }: { product: CardProduct; curre
 
   return (
     <div className="group relative flex flex-col">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-slate-100">
+      <div className="relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-white transition group-hover:border-brand-300">
         <Link href={`/products/${product.slug}`} className="block h-full w-full" aria-label={product.name}>
           <SafeImage
             src={images[0]}
             alt={product.name}
-            className={cn("absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105", images[1] && "group-hover:opacity-0")}
+            className={cn("absolute inset-0 h-full w-full object-contain transition duration-700 group-hover:scale-105", images[1] && "group-hover:opacity-0")}
           />
           {images[1] && (
-            <SafeImage src={images[1]} alt="" className="absolute inset-0 h-full w-full scale-105 object-cover opacity-0 transition duration-700 group-hover:scale-100 group-hover:opacity-100" />
+            <SafeImage src={images[1]} alt="" className="absolute inset-0 h-full w-full scale-105 object-contain opacity-0 transition duration-700 group-hover:scale-100 group-hover:opacity-100" />
           )}
         </Link>
         <Badges product={product} off={off} />
@@ -65,7 +78,7 @@ export function ProductCard({ product, currency }: { product: CardProduct; curre
       <div className="flex flex-1 flex-col pt-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            {product.category && <p className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase">{product.category.name}</p>}
+            <Eyebrow product={product} />
             <Link href={`/products/${product.slug}`} className="mt-0.5 line-clamp-2 text-sm font-semibold text-slate-900 hover:text-brand-600 sm:text-base">
               {product.name}
             </Link>
@@ -93,12 +106,12 @@ export function ProductRow({ product, currency }: { product: CardProduct; curren
   const { images, onSale, off, item } = meta(product);
   return (
     <div className="card group flex gap-4 overflow-hidden p-3 transition hover:shadow-md sm:gap-6 sm:p-4">
-      <Link href={`/products/${product.slug}`} className="relative aspect-square w-28 shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:w-44">
-        <SafeImage src={images[0]} alt={product.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+      <Link href={`/products/${product.slug}`} className="relative aspect-square w-28 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white sm:w-44">
+        <SafeImage src={images[0]} alt={product.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
         <Badges product={product} off={off} />
       </Link>
       <div className="flex min-w-0 flex-1 flex-col">
-        {product.category && <p className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase">{product.category.name}</p>}
+        <Eyebrow product={product} />
         <Link href={`/products/${product.slug}`} className="text-base font-semibold hover:text-brand-600 sm:text-lg">{product.name}</Link>
         {product.reviewCount ? (
           <div className="mt-1 flex items-center gap-1.5">
