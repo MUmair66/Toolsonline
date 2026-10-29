@@ -16,15 +16,6 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <h1 className="text-2xl font-bold">Welcome back</h1>
         <p className="mt-1 mb-8 text-sm text-slate-500">Sign in to your account to continue.</p>
         <LoginForm next={next} />
-        {/* Demo credentials are only shown when running locally, never on the live site. */}
-        {process.env.NODE_ENV === "development" && (
-          <div className="mt-8 rounded-xl bg-slate-50 p-4 text-xs text-slate-600">
-            <p className="mb-1 font-semibold text-slate-700">Demo accounts (local only)</p>
-            <p>Admin: <span className="font-mono">admin@shopnext.com</span> / <span className="font-mono">admin123</span></p>
-            <p>Staff: <span className="font-mono">staff@shopnext.com</span> / <span className="font-mono">staff123</span></p>
-            <p>Customer: <span className="font-mono">john@example.com</span> / <span className="font-mono">password123</span></p>
-          </div>
-        )}
       </div>
     </div>
   );
