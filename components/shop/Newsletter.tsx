@@ -5,7 +5,7 @@ import { Mail } from "lucide-react";
 import { subscribe } from "@/actions/shop";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
-export function Newsletter() {
+export function Newsletter({ dark }: { dark?: boolean } = {}) {
   const [state, action] = useActionState(subscribe, undefined);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
@@ -20,8 +20,8 @@ export function Newsletter() {
         </div>
         <SubmitButton pendingText="…" className="!rounded-xl">Subscribe</SubmitButton>
       </div>
-      {state?.error && <p className="mt-2 text-sm text-red-600">{state.error}</p>}
-      {state?.success && <p className="mt-2 text-sm font-medium text-emerald-700">{state.success}</p>}
+      {state?.error && <p className={`mt-2 text-sm ${dark ? "text-red-300" : "text-red-600"}`}>{state.error}</p>}
+      {state?.success && <p className={`mt-2 text-sm font-medium ${dark ? "text-emerald-300" : "text-emerald-700"}`}>{state.success}</p>}
     </form>
   );
 }
