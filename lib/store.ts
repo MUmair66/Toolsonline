@@ -5,9 +5,10 @@
 const address = "54 Brandreth Rd, Chowk Dalgran Garhi Shahu, Lahore, 54000";
 
 export const STORE = {
-  phones: ["+92 322 4467939", "+92 336 8181677"],
-  /** Number used for WhatsApp links (digits only, with country code). */
-  whatsapp: "923224467939",
+  phones: ["+92 322 4467939", "+92 326 5307599"],
+  /** Number used for WhatsApp links (digits only, with country code) and how it is displayed. */
+  whatsapp: "923265307599",
+  whatsappDisplay: "+92 326 5307599",
   email: "",
   address,
   city: "Lahore",

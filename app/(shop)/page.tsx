@@ -216,7 +216,7 @@ export default async function HomePage() {
     },
     {
       q: "Not sure which tool to buy?",
-      a: `Call us on ${STORE.phones[0]} or message us on WhatsApp. Tell us what you are working on and we will recommend the right tool.`,
+      a: `Call us on ${STORE.phones[0]} or message us on WhatsApp at ${STORE.whatsappDisplay}. Tell us what you are working on and we will recommend the right tool.`,
     },
   ];
 

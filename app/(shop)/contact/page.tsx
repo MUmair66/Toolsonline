@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Contact us" };
 export default function ContactPage() {
   const items = [
     { icon: Phone, title: "Phone", lines: STORE.phones.map((p) => ({ text: p, href: telHref(p) })) },
-    { icon: MessageCircle, title: "WhatsApp", lines: [{ text: STORE.phones[0], href: whatsappHref(), external: true }] },
+    { icon: MessageCircle, title: "WhatsApp", lines: [{ text: STORE.whatsappDisplay, href: whatsappHref(), external: true }] },
     ...(STORE.email ? [{ icon: Mail, title: "Email", lines: [{ text: STORE.email, href: `mailto:${STORE.email}` }] }] : []),
     { icon: MapPin, title: "Address", lines: [{ text: STORE.address, href: STORE.mapsUrl, external: true }] },
     { icon: Clock, title: "Hours", lines: [{ text: STORE.hours }] },

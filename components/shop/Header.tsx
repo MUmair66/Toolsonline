@@ -7,7 +7,7 @@ import { CATALOG_TAG, getSettings } from "@/lib/settings";
 import { visibleWhere } from "@/lib/products";
 import { formatPrice } from "@/lib/utils";
 import { NAV_CATEGORIES, STORE, telHref } from "@/lib/store";
-import { CategoryMenu, HeaderActions, MobileMenu, NavLinks, SearchBar, StickyShell } from "./HeaderClient";
+import { HeaderActions, MobileMenu, NavLinks, SearchBar, StickyShell } from "./HeaderClient";
 
 /** Extra pages (shown in the mobile drawer; the desktop bar uses category/brand shortcuts). */
 export const NAV = [
@@ -58,7 +58,7 @@ function Logo({ storeName }: { storeName: string }) {
 
 export async function Header() {
   const [user, settings] = await Promise.all([getCurrentUser(), getSettings()]);
-  const { cats, brands, saleCount } = await getMenuData(settings.autoHideOutOfStock);
+  const { cats, saleCount } = await getMenuData(settings.autoHideOutOfStock);
   const freeShip = settings.freeShippingThreshold > 0 ? formatPrice(settings.freeShippingThreshold, settings.currency).replace(/\.00$/, "") : null;
   const headerUser = user ? { name: user.name, role: user.role } : null;
   const navCats = NAV_CATEGORIES.map((n) => ({ ...n, cat: cats.find((c) => c.slug === n.slug) })).filter((n) => n.cat);
@@ -108,16 +108,15 @@ export async function Header() {
           <SearchBar compact categories={searchCats} />
         </div>
 
-        {/* Nav row: All Categories + shortcuts */}
+        {/* Nav row: bestsellers + category shortcuts (the full category list lives in the home hero and the mobile menu) */}
         <div className="hidden border-t border-slate-200 lg:block">
           <div className="container-x flex h-12 items-stretch gap-6">
-            <CategoryMenu categories={cats} />
             <NavLinks
               links={[
                 { href: "/products?featured=1", label: "Bestsellers", hot: true },
                 ...(saleCount > 0 ? [{ href: "/products?sale=1&sort=discount", label: "Deals", hot: true }] : []),
+                { href: "/products?sort=newest", label: "New Arrivals" },
                 ...navCats.map((n) => ({ href: `/products?category=${n.slug}`, label: n.label })),
-                ...brands.map((b) => ({ href: `/products?brand=${b.slug}`, label: b.name, wide: true })),
               ]}
             />
             <Link href="/contact" className="ml-auto hidden shrink-0 items-center gap-2 text-sm font-bold text-slate-900 transition hover:text-brand-700 xl:flex">
