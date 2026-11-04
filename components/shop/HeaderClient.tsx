@@ -16,7 +16,7 @@ import {
   Loader2,
   LogIn,
   LogOut,
-  Menu,
+  MessageCircle,
   Package,
   Phone,
   Search,
@@ -32,6 +32,7 @@ import { usePrice } from "@/components/providers/StoreProvider";
 import { SafeImage } from "@/components/ui/SafeImage";
 import { logout } from "@/actions/auth";
 import { cn } from "@/lib/utils";
+import { telHref, whatsappHref } from "@/lib/store";
 
 type NavItem = { href: string; label: string };
 type Cat = { name: string; slug: string; image: string | null; count: number };
@@ -168,7 +169,9 @@ export function CategoryMenu({ categories }: { categories: Cat[] }) {
                       hover === i ? "bg-brand-50 text-brand-700" : "text-slate-700 hover:bg-slate-50"
                     )}
                   >
-                    <SafeImage src={c.image} alt="" className="h-8 w-8 shrink-0 rounded-lg object-cover" />
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-50 p-1">
+                      <SafeImage src={c.image} alt="" className="h-full w-full object-contain mix-blend-multiply" />
+                    </span>
                     <span className="flex-1 font-medium">{c.name}</span>
                     <span className="text-xs text-slate-400">{c.count}</span>
                     <ChevronRight className={cn("h-4 w-4 transition", hover === i ? "translate-x-0 opacity-100" : "-translate-x-1 opacity-0")} />
@@ -185,17 +188,19 @@ export function CategoryMenu({ categories }: { categories: Cat[] }) {
               <Link
                 href={`/products?category=${preview.slug}`}
                 onClick={() => setOpen(false)}
-                className="group relative flex-1 overflow-hidden"
+                className="group flex flex-1 flex-col bg-gradient-to-b from-slate-50 to-white p-6"
               >
-                <SafeImage src={preview.image} alt={preview.name} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
-                <div className="absolute inset-x-6 bottom-6 text-white">
-                  <p className="text-xs font-semibold tracking-widest text-white/70 uppercase">{preview.count} products</p>
-                  <p className="mt-1 text-2xl font-bold">{preview.name}</p>
-                  <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition group-hover:gap-2.5">
+                {/* Whole product photo, never cropped */}
+                <span className="block min-h-0 flex-1 p-4">
+                  <SafeImage src={preview.image} alt={preview.name} className="h-full max-h-64 w-full object-contain mix-blend-multiply transition duration-500 group-hover:scale-105" />
+                </span>
+                <span className="mt-2 block">
+                  <span className="block text-xs font-semibold tracking-widest text-slate-500 uppercase">{preview.count} products</span>
+                  <span className="mt-1 block text-2xl font-bold text-slate-900">{preview.name}</span>
+                  <span className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition group-hover:gap-2.5 group-hover:bg-black">
                     Shop {preview.name} <ArrowRight className="h-4 w-4" />
                   </span>
-                </div>
+                </span>
               </Link>
             )}
           </div>
@@ -518,14 +523,14 @@ export function MobileMenu({
   categories,
   user,
   storeName,
-  phone,
+  phones,
   hasDeals,
 }: {
   nav: NavItem[];
   categories: Cat[];
   user: HeaderUser;
   storeName: string;
-  phone: string;
+  phones: string[];
   hasDeals?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -654,14 +659,13 @@ export function MobileMenu({
                           href={`/products?category=${c.slug}`}
                           onClick={close}
                           tabIndex={showCats ? 0 : -1}
-                          className="relative aspect-[4/3] overflow-hidden rounded-xl bg-slate-100"
+                          className="flex flex-col rounded-xl border border-slate-200 bg-white p-2.5 text-left active:bg-slate-50"
                         >
-                          <SafeImage src={c.image} alt={c.name} className="h-full w-full object-cover" />
-                          <span className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-                          <span className="absolute inset-x-2.5 bottom-2 text-left">
-                            <span className="block text-sm font-semibold text-white">{c.name}</span>
-                            <span className="text-[11px] text-white/75">{c.count} items</span>
+                          <span className="block h-16 rounded-lg bg-slate-50 p-1.5">
+                            <SafeImage src={c.image} alt={c.name} className="h-full w-full object-contain mix-blend-multiply" />
                           </span>
+                          <span className="mt-2 line-clamp-2 text-[13px] leading-snug font-semibold text-slate-900">{c.name}</span>
+                          <span className="text-[11px] text-slate-500">{c.count} items</span>
                         </Link>
                       ))}
                     </div>
@@ -700,13 +704,17 @@ export function MobileMenu({
           </div>
         </div>
 
-        <div className="shrink-0 border-t border-slate-100 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <a href={`tel:${phone.replace(/[^\d+]/g, "")}`} className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm"><Phone className="h-4 w-4 text-brand-600" /></span>
-            <span>
-              <span className="block text-xs text-slate-400">Need help? Call us</span>
-              <span className="font-semibold">{phone}</span>
-            </span>
+        <div className="shrink-0 space-y-2 border-t border-slate-100 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <p className="text-xs text-slate-400">Need help? Call or WhatsApp us</p>
+          <div className="grid grid-cols-2 gap-2">
+            {phones.map((p) => (
+              <a key={p} href={telHref(p)} className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-[13px] font-semibold active:bg-slate-100">
+                <Phone className="h-4 w-4 shrink-0 text-brand-600" /> <span className="truncate">{p}</span>
+              </a>
+            ))}
+          </div>
+          <a href={whatsappHref()} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-3 py-2.5 text-sm font-bold text-white">
+            <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
           </a>
         </div>
       </div>

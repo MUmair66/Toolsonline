@@ -215,8 +215,8 @@ export function SettingsForm({
         <h2 className="font-semibold sm:col-span-2">Store details</h2>
         <Field label="Store name *" name="storeName" defaultValue={s.storeName} required />
         <Field label="Tagline" name="tagline" defaultValue={s.tagline} />
-        <Field label="Contact email" name="contactEmail" type="email" defaultValue={s.contactEmail} />
-        <Field label="Contact phone" name="contactPhone" defaultValue={s.contactPhone} />
+        <Field label="Contact email" name="contactEmail" type="email" defaultValue={s.contactEmail} hint="Internal only. The store shows the details in lib/store.ts." />
+        <Field label="Contact phone" name="contactPhone" defaultValue={s.contactPhone} hint="Internal only. Phones, address and WhatsApp shown on the store are set in lib/store.ts." />
         <Field
           label="Announcement bar"
           name="announcement"

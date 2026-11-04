@@ -43,7 +43,7 @@ export function QuickAdd({ item }: { item: Item }) {
         cart.add(item, 1);
         toast(`"${item.name}" added to cart`);
       }}
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white transition hover:bg-brand-400 hover:text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-300 sm:h-11 sm:w-11"
       aria-label="Add to cart"
       title={out ? "Out of stock" : "Add to cart"}
     >

@@ -42,60 +42,72 @@ function meta(product: CardProduct) {
 
 function Badges({ product, off }: { product: CardProduct; off: number }) {
   return (
-    <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5">
-      {off > 0 && <span className="badge bg-red-500 text-white shadow-sm">-{off}%</span>}
-      {product.featured && off === 0 && <span className="badge bg-slate-900 text-white">Bestseller</span>}
-      {product.stock <= 0 && <span className="badge bg-white/95 text-slate-900 shadow-sm">Sold out</span>}
-      {product.stock > 0 && product.stock <= 5 && <span className="badge bg-amber-400 text-amber-950">Only {product.stock} left</span>}
+    <div className="pointer-events-none absolute top-2.5 left-2.5 flex flex-col items-start gap-1.5 sm:top-3 sm:left-3">
+      {off > 0 && <span className="rounded-md bg-red-500 px-2 py-0.5 text-[11px] font-extrabold text-white uppercase">-{off}%</span>}
+      {product.featured && off === 0 && (
+        <span className="rounded-md bg-brand-400 px-2 py-0.5 text-[11px] font-extrabold tracking-wide text-slate-950 uppercase">Bestseller</span>
+      )}
+      {product.stock <= 0 && <span className="rounded-md bg-slate-900 px-2 py-0.5 text-[11px] font-bold text-white uppercase">Sold out</span>}
     </div>
   );
+}
+
+function StockLine({ stock }: { stock: number }) {
+  if (stock <= 0) return <p className="text-xs font-semibold text-slate-400">Out of stock</p>;
+  if (stock <= 5) return <p className="text-xs font-semibold text-amber-600">● Only {stock} left</p>;
+  return <p className="text-xs font-semibold text-emerald-600">● In stock</p>;
 }
 
 export function ProductCard({ product, currency }: { product: CardProduct; currency: string }) {
   const { images, onSale, off, item } = meta(product);
 
   return (
-    <div className="group relative flex flex-col">
-      <div className="relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-white transition group-hover:border-brand-300">
-        <Link href={`/products/${product.slug}`} className="block h-full w-full" aria-label={product.name}>
-          <SafeImage
-            src={images[0]}
-            alt={product.name}
-            className={cn("absolute inset-0 h-full w-full object-contain transition duration-700 group-hover:scale-105", images[1] && "group-hover:opacity-0")}
-          />
-          {images[1] && (
-            <SafeImage src={images[1]} alt="" className="absolute inset-0 h-full w-full scale-105 object-contain opacity-0 transition duration-700 group-hover:scale-100 group-hover:opacity-100" />
-          )}
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition duration-300 hover:border-slate-300 hover:shadow-[0_16px_36px_-12px_rgba(15,23,42,0.18)]">
+      {/* Fixed square image area: photos are contained, never stretched or cropped, and the card never jumps while loading. */}
+      <div className="relative aspect-square overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100/70">
+        <Link href={`/products/${product.slug}`} className="absolute inset-0 block p-4 sm:p-6" aria-label={product.name}>
+          <span className="relative block h-full w-full">
+            <SafeImage
+              src={images[0]}
+              alt={product.name}
+              className={cn(
+                "absolute inset-0 h-full w-full object-contain mix-blend-multiply transition duration-500 group-hover:scale-105",
+                images[1] && "group-hover:opacity-0"
+              )}
+            />
+            {images[1] && (
+              <SafeImage
+                src={images[1]}
+                alt=""
+                className="absolute inset-0 h-full w-full object-contain opacity-0 mix-blend-multiply transition duration-500 group-hover:opacity-100"
+              />
+            )}
+          </span>
         </Link>
         <Badges product={product} off={off} />
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
           <WishlistButton item={item} />
         </div>
-        <div className="absolute inset-x-3 bottom-3 hidden translate-y-3 opacity-0 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 sm:block">
-          <AddToCartBar item={item} />
-        </div>
       </div>
-      <div className="flex flex-1 flex-col pt-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <Eyebrow product={product} />
-            <Link href={`/products/${product.slug}`} className="mt-0.5 line-clamp-2 text-sm font-semibold text-slate-900 hover:text-brand-600 sm:text-base">
-              {product.name}
-            </Link>
-          </div>
-          <div className="sm:hidden">
-            <QuickAdd item={item} />
-          </div>
-        </div>
+
+      <div className="flex flex-1 flex-col gap-1 p-3 sm:p-4">
+        <Eyebrow product={product} />
+        <Link href={`/products/${product.slug}`} className="line-clamp-2 text-sm leading-snug font-bold text-slate-900 hover:text-brand-700 sm:text-[15px]">
+          {product.name}
+        </Link>
         {product.reviewCount ? (
-          <div className="mt-1 flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5">
             <Stars rating={product.rating ?? 0} />
             <span className="text-xs text-slate-400">({product.reviewCount})</span>
           </div>
         ) : null}
-        <div className="mt-auto flex items-baseline gap-2 pt-2">
-          <span className={cn("text-base font-bold sm:text-lg", onSale && "text-red-600")}>{formatPrice(product.price, currency)}</span>
-          {onSale && <span className="text-sm text-slate-400 line-through">{formatPrice(product.comparePrice!, currency)}</span>}
+        <StockLine stock={product.stock} />
+        <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+          <div className="min-w-0">
+            <p className={cn("text-base font-extrabold sm:text-lg", onSale ? "text-red-600" : "text-slate-900")}>{formatPrice(product.price, currency)}</p>
+            {onSale && <p className="text-xs text-slate-400 line-through">{formatPrice(product.comparePrice!, currency)}</p>}
+          </div>
+          <QuickAdd item={item} />
         </div>
       </div>
     </div>

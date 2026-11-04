@@ -33,7 +33,7 @@ export function ProductTabs({ tabs, currency }: { tabs: ProductTab[]; currency: 
         ))}
       </div>
 
-      <div key={tab.key} role="tabpanel" className="grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-6 lg:grid-cols-4">
+      <div key={tab.key} role="tabpanel" className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
         {tab.products.map((p, i) => (
           <div key={p.id} className="animate-fade-up" style={{ animationDelay: `${i * 50}ms` }}>
             <ProductCard product={p} currency={currency} />
@@ -42,7 +42,7 @@ export function ProductTabs({ tabs, currency }: { tabs: ProductTab[]; currency: 
       </div>
 
       <div className="mt-10 text-center">
-        <Link href={tab.href} className="btn-secondary !rounded-full !px-6">
+        <Link href={tab.href} className="inline-flex h-12 items-center gap-2 rounded-xl bg-slate-950 px-6 text-[15px] font-bold text-white transition hover:bg-black">
           View all {tab.count} {tab.label.toLowerCase()} <ArrowRight className="h-4 w-4" />
         </Link>
       </div>

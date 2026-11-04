@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Banknote, Mail, MessageCircle, Phone, ShieldCheck, Truck } from "lucide-react";
+import { Banknote, Mail, MapPin, MessageCircle, Phone, ShieldCheck, Truck } from "lucide-react";
+import { STORE, telHref, whatsappHref } from "@/lib/store";
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { formatPrice } from "@/lib/utils";
@@ -23,7 +24,7 @@ export async function Footer() {
   const linkCls = "text-slate-400 transition hover:text-brand-400";
 
   return (
-    <footer className="mt-20 bg-slate-950 text-slate-300">
+    <footer className="mt-12 bg-slate-950 text-slate-300 sm:mt-16">
       <div className="border-b border-white/10">
         <div className="container-x grid grid-cols-2 gap-6 py-10 lg:grid-cols-4">
           {perks.map((p) => {
@@ -54,14 +55,32 @@ export async function Footer() {
             <img src="/logo.webp" alt={s.storeName} width={700} height={138} className="h-11 w-auto" />
           </Link>
           <p className="mt-4 max-w-sm text-sm text-slate-400">{s.tagline}. Power tools and machinery for professionals and workshops.</p>
-          <div className="mt-5 space-y-2 text-sm">
-            <a href={`mailto:${s.contactEmail}`} className={`flex items-center gap-2 ${linkCls}`}>
-              <Mail className="h-4 w-4" /> {s.contactEmail}
-            </a>
-            <a href={`tel:${s.contactPhone.replace(/[^\d+]/g, "")}`} className={`flex items-center gap-2 ${linkCls}`}>
-              <Phone className="h-4 w-4" /> {s.contactPhone}
-            </a>
-          </div>
+          <ul className="mt-5 space-y-2.5 text-sm">
+            <li>
+              <a href={STORE.mapsUrl} target="_blank" rel="noopener noreferrer" className={`flex items-start gap-2 ${linkCls}`}>
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0" /> {STORE.address}
+              </a>
+            </li>
+            {STORE.phones.map((p) => (
+              <li key={p}>
+                <a href={telHref(p)} className={`flex items-center gap-2 ${linkCls}`}>
+                  <Phone className="h-4 w-4 shrink-0" /> {p}
+                </a>
+              </li>
+            ))}
+            <li>
+              <a href={whatsappHref()} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 ${linkCls}`}>
+                <MessageCircle className="h-4 w-4 shrink-0" /> WhatsApp us
+              </a>
+            </li>
+            {STORE.email && (
+              <li>
+                <a href={`mailto:${STORE.email}`} className={`flex items-center gap-2 ${linkCls}`}>
+                  <Mail className="h-4 w-4 shrink-0" /> {STORE.email}
+                </a>
+              </li>
+            )}
+          </ul>
         </div>
         <div>
           <p className="font-semibold text-white">Shop</p>
