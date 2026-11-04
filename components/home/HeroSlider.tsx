@@ -75,7 +75,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
           >
             <div className={cn("order-2 sm:order-1", active && "animate-fade-up")}>
               <p className="text-xs font-bold tracking-[0.12em] uppercase opacity-80 sm:text-[13px]">{s.eyebrow}</p>
-              <h2 className="mt-2 text-[26px] leading-[1.1] font-extrabold tracking-tight sm:text-3xl lg:text-[40px]">{s.title}</h2>
+              <h2 className="mt-2 text-[26px] leading-[1.1] font-extrabold tracking-tight sm:text-3xl xl:text-[40px]">{s.title}</h2>
               {s.text && <p className={cn("mt-2 line-clamp-2 text-sm sm:text-[15px]", t.sub)}>{s.text}</p>}
               <p className="mt-3 text-xl font-extrabold sm:text-2xl">{s.price}</p>
               <Link

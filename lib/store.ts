@@ -17,6 +17,18 @@ export const STORE = {
   mapsEmbed: `https://maps.google.com/maps?q=${encodeURIComponent(address)}&z=16&output=embed`,
 };
 
+/**
+ * Category shortcuts in the desktop nav bar, with short labels. Matched by category slug;
+ * a shortcut is hidden automatically if that category has no products.
+ */
+export const NAV_CATEGORIES = [
+  { slug: "grinders", label: "Grinders" },
+  { slug: "hammers", label: "Hammers" },
+  { slug: "drills-drivers", label: "Drills" },
+  { slug: "cut-off-machines", label: "Cut-off Machines" },
+  { slug: "welding-machines", label: "Welding" },
+];
+
 /** "+92 322 4467939" → "tel:+923224467939" */
 export const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`;
 export const whatsappHref = (text = "Hi, I have a question about a tool.") =>

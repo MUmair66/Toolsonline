@@ -8,20 +8,20 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronRight,
-  Home,
-  Store,
   Heart,
+  Home,
   LayoutDashboard,
   LayoutGrid,
   Loader2,
   LogIn,
   LogOut,
+  Menu,
   MessageCircle,
   Package,
   Phone,
   Search,
-  ShoppingBag,
   ShoppingCart,
+  Store,
   User,
   UserPlus,
   X,
@@ -35,7 +35,9 @@ import { cn } from "@/lib/utils";
 import { telHref, whatsappHref } from "@/lib/store";
 
 type NavItem = { href: string; label: string };
+type NavLink = { href: string; label: string; hot?: boolean; wide?: boolean };
 type Cat = { name: string; slug: string; image: string | null; count: number };
+type SearchCat = { name: string; slug: string };
 type HeaderUser = { name: string; role: string } | null;
 
 function useClickOutside<T extends HTMLElement>(onOutside: () => void) {
@@ -50,7 +52,7 @@ function useClickOutside<T extends HTMLElement>(onOutside: () => void) {
   return ref;
 }
 
-/* ---------------- Sticky wrapper ---------------- */
+/* ---------------- Sticky wrapper (white) ---------------- */
 
 export function StickyShell({ children }: { children: React.ReactNode }) {
   const [scrolled, setScrolled] = useState(false);
@@ -63,8 +65,8 @@ export function StickyShell({ children }: { children: React.ReactNode }) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 border-b bg-slate-950/95 text-white backdrop-blur-md transition-shadow duration-300",
-        scrolled ? "border-white/10 shadow-[0_6px_24px_-8px_rgba(0,0,0,0.5)]" : "border-white/10"
+        "sticky top-0 z-40 border-b border-slate-200 bg-white text-slate-900 transition-shadow duration-300",
+        scrolled && "shadow-[0_6px_20px_-10px_rgba(15,23,42,0.25)]"
       )}
     >
       {children}
@@ -72,21 +74,19 @@ export function StickyShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ---------------- Nav links with active indicator ---------------- */
+/* ---------------- Nav shortcuts with active underline ---------------- */
 
-function NavLinksInner({ nav }: { nav: NavItem[] }) {
+function NavLinksInner({ links }: { links: NavLink[] }) {
   const pathname = usePathname();
   const params = useSearchParams();
   const isActive = (href: string) => {
     const [path, qs] = href.split("?");
-    if (path === "/") return pathname === "/";
-    if (pathname !== path) return false;
-    if (!qs) return !params.get("sort") && !params.get("featured") && !params.get("sale");
+    if (pathname !== path || !qs) return false;
     return [...new URLSearchParams(qs).entries()].every(([k, v]) => params.get(k) === v);
   };
   return (
-    <nav className="flex h-full items-center gap-7" aria-label="Main">
-      {nav.map((n) => {
+    <nav className="flex min-w-0 items-stretch gap-6 overflow-hidden" aria-label="Main">
+      {links.map((n) => {
         const active = isActive(n.href);
         return (
           <Link
@@ -94,9 +94,10 @@ function NavLinksInner({ nav }: { nav: NavItem[] }) {
             href={n.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "relative flex h-full items-center text-sm font-medium transition-colors",
-              active ? "text-white" : "text-slate-400 hover:text-white",
-              "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-left after:rounded-full after:bg-brand-400 after:transition-transform after:duration-300",
+              "relative shrink-0 items-center text-[15px] font-semibold whitespace-nowrap transition-colors",
+              n.wide ? "hidden xl:flex" : "flex",
+              n.hot ? "text-red-600 hover:text-red-700" : active ? "text-slate-950" : "text-slate-700 hover:text-slate-950",
+              "after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:origin-left after:rounded-t after:bg-brand-400 after:transition-transform after:duration-200",
               active ? "after:scale-x-100" : "after:scale-x-0 hover:after:scale-x-100"
             )}
           >
@@ -108,19 +109,18 @@ function NavLinksInner({ nav }: { nav: NavItem[] }) {
   );
 }
 
-export function NavLinks({ nav }: { nav: NavItem[] }) {
+export function NavLinks({ links }: { links: NavLink[] }) {
   return (
-    <Suspense fallback={<nav className="flex gap-7 text-sm text-slate-500">{nav.map((n) => <span key={n.href}>{n.label}</span>)}</nav>}>
-      <NavLinksInner nav={nav} />
+    <Suspense fallback={<nav className="flex items-center gap-6 text-[15px] font-semibold text-slate-700">{links.filter((l) => !l.wide).map((n) => <span key={n.href}>{n.label}</span>)}</nav>}>
+      <NavLinksInner links={links} />
     </Suspense>
   );
 }
 
-/* ---------------- Category mega menu ---------------- */
+/* ---------------- "All Categories" dropdown ---------------- */
 
 export function CategoryMenu({ categories }: { categories: Cat[] }) {
   const [open, setOpen] = useState(false);
-  const [hover, setHover] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const ref = useClickOutside<HTMLDivElement>(() => setOpen(false));
   const pathname = usePathname();
@@ -134,90 +134,58 @@ export function CategoryMenu({ categories }: { categories: Cat[] }) {
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setOpen(false), 150);
   };
-  const preview = categories[hover];
 
   return (
-    <div ref={ref} className="relative h-full" onMouseEnter={show} onMouseLeave={hide}>
+    <div ref={ref} className="relative shrink-0" onMouseEnter={show} onMouseLeave={hide}>
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="true"
-        className={cn(
-          "flex h-full items-center gap-2 pr-1 text-sm font-semibold transition-colors",
-          open ? "text-brand-400" : "text-white hover:text-brand-400"
-        )}
+        className="flex h-full items-center gap-2.5 bg-brand-400 px-5 text-[15px] font-bold text-slate-950 transition hover:bg-brand-300"
       >
-        <span className={cn("flex h-7 w-7 items-center justify-center rounded-lg transition", open ? "bg-brand-400 text-slate-950" : "bg-white/10 text-white")}>
-          <LayoutGrid className="h-4 w-4" />
-        </span>
-        All categories
+        <Menu className="h-[18px] w-[18px]" strokeWidth={2.5} />
+        All Categories
         <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
       </button>
 
       {open && categories.length > 0 && (
-        <div className="animate-in absolute top-full left-0 z-50 pt-2">
-          <div className="flex w-[680px] overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl shadow-black/30">
-            <ul className="w-64 shrink-0 border-r border-slate-100 p-2">
-              {categories.map((c, i) => (
-                <li key={c.slug}>
-                  <Link
-                    href={`/products?category=${c.slug}`}
-                    onMouseEnter={() => setHover(i)}
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition",
-                      hover === i ? "bg-brand-50 text-brand-700" : "text-slate-700 hover:bg-slate-50"
-                    )}
-                  >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-50 p-1">
-                      <SafeImage src={c.image} alt="" className="h-full w-full object-contain mix-blend-multiply" />
-                    </span>
-                    <span className="flex-1 font-medium">{c.name}</span>
-                    <span className="text-xs text-slate-400">{c.count}</span>
-                    <ChevronRight className={cn("h-4 w-4 transition", hover === i ? "translate-x-0 opacity-100" : "-translate-x-1 opacity-0")} />
-                  </Link>
-                </li>
-              ))}
-              <li className="mt-1 border-t border-slate-100 pt-1">
-                <Link href="/categories" onClick={() => setOpen(false)} className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold text-brand-600 hover:bg-brand-50">
-                  Browse all categories <ArrowRight className="h-4 w-4" />
+        <div className="animate-in absolute top-full left-0 z-50 w-[300px] border border-t-0 border-slate-200 bg-white shadow-[0_18px_40px_-12px_rgba(15,23,42,0.25)]">
+          <ul className="max-h-[70vh] overflow-y-auto py-2">
+            {categories.map((c) => (
+              <li key={c.slug}>
+                <Link
+                  href={`/products?category=${c.slug}`}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center justify-between gap-3 px-5 py-2.5 text-[15px] text-slate-800 transition hover:bg-brand-50 hover:text-slate-950"
+                >
+                  <span className="truncate">{c.name}</span>
+                  <span className="text-xs text-slate-400">{c.count}</span>
                 </Link>
               </li>
-            </ul>
-            {preview && (
-              <Link
-                href={`/products?category=${preview.slug}`}
-                onClick={() => setOpen(false)}
-                className="group flex flex-1 flex-col bg-gradient-to-b from-slate-50 to-white p-6"
-              >
-                {/* Whole product photo, never cropped */}
-                <span className="block min-h-0 flex-1 p-4">
-                  <SafeImage src={preview.image} alt={preview.name} className="h-full max-h-64 w-full object-contain mix-blend-multiply transition duration-500 group-hover:scale-105" />
-                </span>
-                <span className="mt-2 block">
-                  <span className="block text-xs font-semibold tracking-widest text-slate-500 uppercase">{preview.count} products</span>
-                  <span className="mt-1 block text-2xl font-bold text-slate-900">{preview.name}</span>
-                  <span className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition group-hover:gap-2.5 group-hover:bg-black">
-                    Shop {preview.name} <ArrowRight className="h-4 w-4" />
-                  </span>
-                </span>
-              </Link>
-            )}
-          </div>
+            ))}
+          </ul>
+          <Link
+            href="/categories"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-1.5 border-t border-slate-100 px-5 py-3 text-sm font-bold text-slate-900 hover:bg-brand-50"
+          >
+            All categories <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       )}
     </div>
   );
 }
 
-/* ---------------- Search with live suggestions ---------------- */
+/* ---------------- Search (category select + live suggestions) ---------------- */
 
 type Suggestion = { name: string; slug: string; price: number; comparePrice: number | null; image: string; category: string | null };
 
-export function SearchBar({ compact }: { compact?: boolean }) {
+export function SearchBar({ compact, categories = [] }: { compact?: boolean; categories?: SearchCat[] }) {
   const router = useRouter();
   const fmt = usePrice();
   const [q, setQ] = useState("");
+  const [cat, setCat] = useState("");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<Suggestion[]>([]);
@@ -230,6 +198,7 @@ export function SearchBar({ compact }: { compact?: boolean }) {
     if (q.trim().length < 2) {
       setItems([]);
       setCats([]);
+      setLoading(false);
       return;
     }
     setLoading(true);
@@ -252,7 +221,11 @@ export function SearchBar({ compact }: { compact?: boolean }) {
 
   const goAll = () => {
     setOpen(false);
-    router.push(`/products${q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ""}`);
+    const sp = new URLSearchParams();
+    if (q.trim()) sp.set("q", q.trim());
+    if (cat) sp.set("category", cat);
+    const qs = sp.toString();
+    router.push(`/products${qs ? `?${qs}` : ""}`);
   };
 
   return (
@@ -266,12 +239,25 @@ export function SearchBar({ compact }: { compact?: boolean }) {
           router.push(`/products/${items[active].slug}`);
         } else goAll();
       }}
-      className={cn("relative w-full", !compact && "max-w-2xl")}
+      className={cn("relative w-full", !compact && "max-w-3xl")}
     >
-      <div className="group flex items-center rounded-xl border border-transparent bg-white text-slate-900 transition focus-within:border-brand-400 focus-within:shadow-[0_0_0_4px_rgba(245,211,58,0.35)]">
-        <span className="pl-4 text-slate-400">
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-        </span>
+      <div className="flex h-11 items-stretch overflow-hidden rounded-xl border-2 border-slate-900 bg-white transition focus-within:border-brand-500 focus-within:shadow-[0_0_0_4px_rgba(245,211,58,0.35)] sm:h-12">
+        {!compact && categories.length > 0 && (
+          <div className="relative hidden shrink-0 border-r border-slate-200 bg-slate-50 lg:block">
+            <select
+              value={cat}
+              onChange={(e) => setCat(e.target.value)}
+              aria-label="Search in category"
+              className="h-full max-w-[170px] cursor-pointer appearance-none bg-transparent pr-8 pl-4 text-sm font-semibold text-slate-800 focus:outline-none"
+            >
+              <option value="">All categories</option>
+              {categories.map((c) => (
+                <option key={c.slug} value={c.slug}>{c.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 h-4 w-4 -translate-y-1/2 text-slate-500" />
+          </div>
+        )}
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -285,23 +271,31 @@ export function SearchBar({ compact }: { compact?: boolean }) {
               setActive((i) => Math.max(-1, i - 1));
             } else if (e.key === "Escape") setOpen(false);
           }}
-          placeholder="Search for products, brands and categories…"
-          className="h-11 min-w-0 flex-1 bg-transparent px-3 text-sm placeholder:text-slate-400 focus:outline-none"
+          placeholder="Search tools, brands and models"
+          className="min-w-0 flex-1 bg-transparent px-4 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none"
           aria-label="Search products"
           autoComplete="off"
         />
         {q && (
-          <button type="button" onClick={() => setQ("")} className="p-1 text-slate-400 hover:text-slate-600" aria-label="Clear search">
+          <button type="button" onClick={() => setQ("")} className="px-2 text-slate-400 hover:text-slate-600" aria-label="Clear search">
             <X className="h-4 w-4" />
           </button>
         )}
-        <button type="submit" className="m-1 hidden rounded-lg bg-brand-400 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-brand-300 sm:block">
-          Search
+        <button
+          type="submit"
+          className={cn(
+            "flex shrink-0 items-center justify-center gap-2 bg-brand-400 font-bold text-slate-950 transition hover:bg-brand-300",
+            compact ? "w-12" : "px-4 text-[15px] sm:px-6"
+          )}
+          aria-label="Search"
+        >
+          {loading ? <Loader2 className="h-[18px] w-[18px] animate-spin" /> : <Search className="h-[18px] w-[18px]" strokeWidth={2.5} />}
+          {!compact && <span className="hidden sm:inline">Search</span>}
         </button>
       </div>
 
       {open && q.trim().length >= 2 && (
-        <div className="animate-in absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl shadow-black/30">
+        <div className="animate-in absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl shadow-slate-900/20">
           {cats.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-100 p-3">
               <span className="mr-1 text-xs font-medium text-slate-400">Categories:</span>
@@ -310,7 +304,7 @@ export function SearchBar({ compact }: { compact?: boolean }) {
                   key={c.slug}
                   href={`/products?category=${c.slug}`}
                   onClick={() => setOpen(false)}
-                  className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100"
+                  className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-800 hover:bg-brand-100"
                 >
                   {c.name}
                 </Link>
@@ -327,7 +321,9 @@ export function SearchBar({ compact }: { compact?: boolean }) {
                     onMouseEnter={() => setActive(i)}
                     className={cn("flex items-center gap-3 rounded-xl px-2.5 py-2", i === active && "bg-slate-50")}
                   >
-                    <SafeImage src={p.image} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-slate-50 p-1">
+                      <SafeImage src={p.image} alt="" className="h-full w-full object-contain mix-blend-multiply" />
+                    </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{p.name}</span>
                       {p.category && <span className="text-xs text-slate-400">{p.category}</span>}
@@ -343,7 +339,7 @@ export function SearchBar({ compact }: { compact?: boolean }) {
           ) : (
             !loading && <p className="px-4 py-8 text-center text-sm text-slate-500">No products found for &ldquo;{q}&rdquo;</p>
           )}
-          <button type="submit" className="flex w-full items-center justify-center gap-1.5 border-t border-slate-100 bg-slate-50 px-4 py-3 text-sm font-semibold text-brand-600 hover:bg-slate-100">
+          <button type="submit" className="flex w-full items-center justify-center gap-1.5 border-t border-slate-100 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-100">
             See all results for &ldquo;{q}&rdquo; <ArrowRight className="h-4 w-4" />
           </button>
         </div>
@@ -354,42 +350,26 @@ export function SearchBar({ compact }: { compact?: boolean }) {
 
 /* ---------------- Account / wishlist / cart ---------------- */
 
-function CountBadge({ n }: { n: number }) {
-  if (!n) return null;
+function CountBadge({ n, always }: { n: number; always?: boolean }) {
+  if (!n && !always) return null;
   return (
-    <span className="absolute -top-1.5 -right-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand-400 px-1 text-[10px] font-bold text-slate-950 ring-2 ring-slate-950">
+    <span className="absolute -top-2 -right-2.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand-400 px-1 text-[10px] font-extrabold text-slate-950 ring-2 ring-white">
       {n > 99 ? "99+" : n}
     </span>
   );
 }
 
-function ActionItem({
-  href,
-  icon: Icon,
-  count,
-  top,
-  bottom,
-  label,
-}: {
-  href: string;
-  icon: typeof Heart;
-  count?: number;
-  top?: string;
-  bottom?: string;
-  label: string;
-}) {
+function ActionItem({ href, icon: Icon, count, alwaysCount, top, bottom, label }: { href: string; icon: typeof Heart; count?: number; alwaysCount?: boolean; top: string; bottom: string; label: string }) {
   return (
-    <Link href={href} aria-label={label} className="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition hover:bg-white/10 xl:px-3">
-      <span className="relative text-slate-200 transition group-hover:text-brand-400">
-        <Icon className="h-[22px] w-[22px]" strokeWidth={1.75} />
-        <CountBadge n={count ?? 0} />
+    <Link href={href} aria-label={label} className="group flex items-center gap-4 rounded-xl px-2 py-1.5 transition hover:bg-slate-100">
+      <span className="relative text-slate-800">
+        <Icon className="h-6 w-6" strokeWidth={1.9} />
+        <CountBadge n={count ?? 0} always={alwaysCount} />
       </span>
-      {(top || bottom) && (
-        <span className="hidden text-left leading-tight xl:block">
-          <span className="block text-[11px] text-slate-400">{top}</span>
-          <span className="block text-sm font-semibold text-white">{bottom}</span>
-        </span>
-      )}
+      <span className="hidden text-left leading-tight xl:block">
+        <span className="block text-[11px] text-slate-500">{top}</span>
+        <span className="block text-sm font-bold text-slate-900">{bottom}</span>
+      </span>
     </Link>
   );
 }
@@ -403,37 +383,33 @@ export function HeaderActions({ user }: { user: HeaderUser }) {
   const isStaff = user?.role === "ADMIN" || user?.role === "STAFF";
 
   return (
-    <div className="flex items-center gap-0.5 sm:gap-1">
-      {/* Account */}
-      <div className="relative" ref={ref}>
+    <div className="flex items-center gap-1 sm:gap-2">
+      {/* Account (phones use the bottom bar instead) */}
+      <div className="relative hidden md:block" ref={ref}>
         <button
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
           aria-label="Account menu"
-          className="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition hover:bg-white/10 xl:px-3"
+          className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition hover:bg-slate-100"
         >
           {user ? (
-            <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-xs font-bold text-white">
-              {user.name.charAt(0).toUpperCase()}
-            </span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-400 text-xs font-extrabold text-slate-950">{user.name.charAt(0).toUpperCase()}</span>
           ) : (
-            <User className="h-[22px] w-[22px] text-slate-200 group-hover:text-brand-400" strokeWidth={1.75} />
+            <User className="h-6 w-6 text-slate-800" strokeWidth={1.9} />
           )}
           <span className="hidden text-left leading-tight xl:block">
-            <span className="block text-[11px] text-slate-400">{user ? `Hello, ${user.name.split(" ")[0]}` : "Welcome"}</span>
-            <span className="flex items-center gap-0.5 text-sm font-semibold text-white">
-              {user ? "My account" : "Sign in"} <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
+            <span className="block text-[11px] text-slate-500">{user ? `Hello, ${user.name.split(" ")[0]}` : "Hello, sign in"}</span>
+            <span className="flex items-center gap-0.5 text-sm font-bold text-slate-900">
+              Account <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
             </span>
           </span>
         </button>
         {open && (
-          <div className="animate-in absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl shadow-black/30">
+          <div className="animate-in absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl shadow-slate-900/20">
             {user ? (
               <>
                 <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3.5">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 font-bold text-white">
-                    {user.name.charAt(0).toUpperCase()}
-                  </span>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-400 font-extrabold text-slate-950">{user.name.charAt(0).toUpperCase()}</span>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{user.name}</p>
                     <p className="text-xs text-slate-500">{user.role === "ADMIN" ? "Super admin" : user.role === "STAFF" ? "Staff" : "Customer"}</p>
@@ -455,10 +431,10 @@ export function HeaderActions({ user }: { user: HeaderUser }) {
               <div className="p-4">
                 <p className="font-semibold">Welcome to our store</p>
                 <p className="mt-1 text-xs text-slate-500">Sign in to track orders, save your wishlist and check out faster.</p>
-                <Link href="/login" onClick={() => setOpen(false)} className="btn-primary mt-4 w-full">
+                <Link href="/login" onClick={() => setOpen(false)} className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white hover:bg-black">
                   <LogIn className="h-4 w-4" /> Sign in
                 </Link>
-                <Link href="/register" onClick={() => setOpen(false)} className="btn-secondary mt-2 w-full">
+                <Link href="/register" onClick={() => setOpen(false)} className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 hover:border-slate-400">
                   <UserPlus className="h-4 w-4" /> Create account
                 </Link>
               </div>
@@ -467,35 +443,20 @@ export function HeaderActions({ user }: { user: HeaderUser }) {
         )}
       </div>
 
-      <div className="hidden sm:block">
+      <div className="hidden md:block">
         <ActionItem href="/wishlist" icon={Heart} count={wishlist.items.length} label="Wishlist" top="Saved" bottom="Wishlist" />
       </div>
-      <ActionItem href="/cart" icon={ShoppingCart} count={count} label="Cart" top={`${count} item${count === 1 ? "" : "s"}`} bottom={ready ? fmt(subtotal) : "Cart"} />
+      <ActionItem href="/cart" icon={ShoppingCart} count={count} alwaysCount label="Cart" top={ready ? fmt(subtotal) : "Rs. 0"} bottom="Cart" />
     </div>
   );
 }
 
-function MenuLink({
-  href,
-  icon: Icon,
-  children,
-  onClick,
-  highlight,
-}: {
-  href: string;
-  icon: typeof User;
-  children: React.ReactNode;
-  onClick: () => void;
-  highlight?: boolean;
-}) {
+function MenuLink({ href, icon: Icon, children, onClick, highlight }: { href: string; icon: typeof User; children: React.ReactNode; onClick: () => void; highlight?: boolean }) {
   return (
     <Link
       href={href}
       onClick={onClick}
-      className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition",
-        highlight ? "font-semibold text-brand-700 hover:bg-brand-50" : "text-slate-700 hover:bg-slate-50"
-      )}
+      className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition", highlight ? "font-semibold text-brand-800 hover:bg-brand-50" : "text-slate-700 hover:bg-slate-50")}
     >
       <Icon className="h-4 w-4" /> {children}
     </Link>
@@ -505,18 +466,6 @@ function MenuLink({
 /* ---------------- Mobile drawer ---------------- */
 
 const OPEN_MENU_EVENT = "open-mobile-menu";
-
-/** Animated hamburger / close icon. */
-function Burger({ open }: { open: boolean }) {
-  const bar = "absolute left-0 h-0.5 w-full rounded-full bg-current transition-all duration-300 ease-out";
-  return (
-    <span className="relative block h-4 w-5" aria-hidden>
-      <span className={cn(bar, open ? "top-[7px] rotate-45" : "top-0")} />
-      <span className={cn(bar, "top-[7px]", open ? "scale-x-0 opacity-0" : "opacity-100")} />
-      <span className={cn(bar, open ? "top-[7px] -rotate-45" : "top-[14px]")} />
-    </span>
-  );
-}
 
 export function MobileMenu({
   nav,
@@ -535,17 +484,13 @@ export function MobileMenu({
 }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [showCats, setShowCats] = useState(false);
   const pathname = usePathname();
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => setMounted(true), []);
   useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
-    const openMenu = () => {
-      setShowCats(true);
-      setOpen(true);
-    };
+    const openMenu = () => setOpen(true);
     window.addEventListener(OPEN_MENU_EVENT, openMenu);
     return () => window.removeEventListener(OPEN_MENU_EVENT, openMenu);
   }, []);
@@ -564,158 +509,112 @@ export function MobileMenu({
 
   const isStaff = user?.role === "ADMIN" || user?.role === "STAFF";
   const close = () => setOpen(false);
+  const sectionTitle = "px-5 pt-5 pb-2 text-xs font-bold tracking-[0.12em] text-slate-500 uppercase";
+  const row = "flex items-center justify-between gap-3 px-5 py-3 text-[16px] text-slate-900 active:bg-slate-50";
 
-  // Rendered through a portal into <body>. The sticky header uses backdrop-blur, and a
-  // backdrop-filter makes fixed-position children size themselves to the header box instead
-  // of the screen, which squashed the old drawer into the header.
+  // Rendered through a portal into <body> so the fixed drawer is sized to the screen, not the header.
   const drawer = (
-    <div
-      className={cn("fixed inset-0 z-[60] lg:hidden", open ? "pointer-events-auto" : "pointer-events-none")}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Menu"
-      aria-hidden={!open}
-    >
-      <div
-        className={cn("absolute inset-0 bg-slate-950/50 backdrop-blur-[2px] transition-opacity duration-300", open ? "opacity-100" : "opacity-0")}
-        onClick={close}
-      />
+    <div className={cn("fixed inset-0 z-[60] lg:hidden", open ? "pointer-events-auto" : "pointer-events-none")} role="dialog" aria-modal="true" aria-label="Menu" aria-hidden={!open}>
+      <div className={cn("absolute inset-0 bg-slate-950/50 transition-opacity duration-300", open ? "opacity-100" : "opacity-0")} onClick={close} />
       <div
         className={cn(
-          "absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col bg-white shadow-2xl transition-transform duration-300 ease-out",
+          "absolute inset-y-0 left-0 flex w-[86%] max-w-[340px] flex-col bg-white shadow-2xl transition-transform duration-300 ease-out",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-16 shrink-0 items-center justify-between bg-slate-950 px-4">
-          <Link href="/" onClick={close} className="flex items-center" aria-label={`${storeName} — home`}>
+        <div className="flex h-[68px] shrink-0 items-center justify-between border-b border-slate-200 px-5">
+          <Link href="/" onClick={close} className="flex items-center gap-2" aria-label={`${storeName} — home`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.webp" alt={storeName} width={700} height={138} className="h-8 w-auto" />
+            <img src="/emblem.png" alt="" width={96} height={96} className="h-9 w-9" />
+            <span className="text-[21px] font-extrabold tracking-tight">toolsonline</span>
           </Link>
-          <button ref={closeRef} onClick={close} className="flex h-10 w-10 items-center justify-center rounded-xl text-white hover:bg-white/10" aria-label="Close menu">
+          <button ref={closeRef} onClick={close} className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-900 hover:bg-slate-200" aria-label="Close menu">
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain">
-          <div className="p-4">
-            {user ? (
-              <Link href="/account" onClick={close} className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-brand-50 to-amber-50 p-3.5 ring-1 ring-brand-100">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 font-bold text-white">
-                  {user.name.charAt(0).toUpperCase()}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-xs text-slate-500">Welcome back</span>
-                  <span className="block truncate font-semibold">{user.name}</span>
-                </span>
-                <ChevronRight className="h-5 w-5 text-slate-400" />
-              </Link>
-            ) : (
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-sm font-semibold">Welcome!</p>
-                <p className="mt-0.5 text-xs text-slate-500">Sign in for orders, wishlist and faster checkout.</p>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <Link href="/login" onClick={close} className="btn-primary !py-2.5">Sign in</Link>
-                  <Link href="/register" onClick={close} className="btn-secondary !py-2.5">Register</Link>
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="flex-1 overflow-y-auto overscroll-contain pb-4">
+          {categories.length > 0 && (
+            <>
+              <p className={sectionTitle}>Shop by category</p>
+              <ul>
+                {categories.map((c) => (
+                  <li key={c.slug}>
+                    <Link href={`/products?category=${c.slug}`} onClick={close} className={row}>
+                      <span className="truncate">{c.name}</span>
+                      <span className="text-xs text-slate-400">{c.count}</span>
+                    </Link>
+                  </li>
+                ))}
+                <li>
+                  <Link href="/categories" onClick={close} className={cn(row, "justify-start gap-1.5 font-bold")}>
+                    All categories <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </li>
+              </ul>
+            </>
+          )}
 
-          <nav className="px-3" aria-label="Mobile">
-            {nav.map((n) => {
-              const active = n.href === "/" ? pathname === "/" : pathname === n.href.split("?")[0] && !n.href.includes("?");
-              return (
-                <Link
-                  key={n.href}
-                  href={n.href}
-                  onClick={close}
-                  className={cn(
-                    "flex items-center justify-between rounded-xl px-3 py-3 text-[15px] font-medium transition",
-                    active ? "bg-brand-50 text-brand-700" : "text-slate-800 active:bg-slate-100"
-                  )}
-                >
+          <p className={sectionTitle}>Shop</p>
+          <ul>
+            {nav.map((n) => (
+              <li key={n.href}>
+                <Link href={n.href} onClick={close} className={row}>
                   {n.label}
-                  <ChevronRight className={cn("h-4 w-4", active ? "text-brand-500" : "text-slate-300")} />
+                  <ChevronRight className="h-4 w-4 text-slate-300" />
                 </Link>
-              );
-            })}
-
-            {categories.length > 0 && (
-              <div>
-                <button
-                  onClick={() => setShowCats((s) => !s)}
-                  aria-expanded={showCats}
-                  className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-[15px] font-medium text-slate-800 active:bg-slate-100"
-                >
-                  <span className="flex items-center gap-2"><LayoutGrid className="h-4 w-4 text-slate-400" /> Categories</span>
-                  <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform duration-200", showCats && "rotate-180")} />
-                </button>
-                <div className={cn("grid transition-all duration-300", showCats ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
-                  <div className="overflow-hidden">
-                    <div className="grid grid-cols-2 gap-2 px-1 pt-1 pb-3">
-                      {categories.map((c) => (
-                        <Link
-                          key={c.slug}
-                          href={`/products?category=${c.slug}`}
-                          onClick={close}
-                          tabIndex={showCats ? 0 : -1}
-                          className="flex flex-col rounded-xl border border-slate-200 bg-white p-2.5 text-left active:bg-slate-50"
-                        >
-                          <span className="block h-16 rounded-lg bg-slate-50 p-1.5">
-                            <SafeImage src={c.image} alt={c.name} className="h-full w-full object-contain mix-blend-multiply" />
-                          </span>
-                          <span className="mt-2 line-clamp-2 text-[13px] leading-snug font-semibold text-slate-900">{c.name}</span>
-                          <span className="text-[11px] text-slate-500">{c.count} items</span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {hasDeals && (
-            <Link href="/products?sale=1&sort=discount" onClick={close} className="mt-1 flex items-center justify-between rounded-xl bg-red-50 px-3 py-3 text-[15px] font-semibold text-red-600">
-              <span>🔥 Hot deals</span>
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-            )}
-          </nav>
-
-          <div className="mt-4 border-t border-slate-100 px-3 py-3">
-            <p className="px-3 pb-1 text-[11px] font-semibold tracking-widest text-slate-400 uppercase">My stuff</p>
-            {[
-              { href: "/account/orders", label: "My orders", icon: Package },
-              { href: "/wishlist", label: "Wishlist", icon: Heart },
-              { href: "/cart", label: "Cart", icon: ShoppingCart },
-              ...(isStaff ? [{ href: "/admin", label: "Admin dashboard", icon: LayoutDashboard }] : []),
-            ].map((l) => (
-              <Link key={l.href} href={l.href} onClick={close} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-700 active:bg-slate-100">
-                <l.icon className="h-[18px] w-[18px] text-slate-400" /> {l.label}
-              </Link>
+              </li>
             ))}
-            {user && (
-              <form action={logout}>
-                <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-red-600 active:bg-red-50">
-                  <LogOut className="h-[18px] w-[18px]" /> Sign out
-                </button>
-              </form>
+            {hasDeals && (
+              <li>
+                <Link href="/products?sale=1&sort=discount" onClick={close} className={cn(row, "font-semibold text-red-600")}>
+                  Hot deals <ChevronRight className="h-4 w-4" />
+                </Link>
+              </li>
             )}
-          </div>
-        </div>
+          </ul>
 
-        <div className="shrink-0 space-y-2 border-t border-slate-100 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <p className="text-xs text-slate-400">Need help? Call or WhatsApp us</p>
-          <div className="grid grid-cols-2 gap-2">
+          <p className={sectionTitle}>Account</p>
+          {user ? (
+            <ul>
+              {[
+                ...(isStaff ? [{ href: "/admin", label: "Admin dashboard", icon: LayoutDashboard }] : []),
+                { href: "/account", label: `My account (${user.name.split(" ")[0]})`, icon: User },
+                { href: "/account/orders", label: "My orders", icon: Package },
+                { href: "/wishlist", label: "Wishlist", icon: Heart },
+              ].map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} onClick={close} className={cn(row, "justify-start")}>
+                    <l.icon className="h-[18px] w-[18px] text-slate-400" /> {l.label}
+                  </Link>
+                </li>
+              ))}
+              <li>
+                <form action={logout}>
+                  <button className={cn(row, "w-full justify-start text-red-600")}>
+                    <LogOut className="h-[18px] w-[18px]" /> Sign out
+                  </button>
+                </form>
+              </li>
+            </ul>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 px-5">
+              <Link href="/login" onClick={close} className="flex h-11 items-center justify-center rounded-xl bg-slate-950 text-sm font-bold text-white">Sign in</Link>
+              <Link href="/register" onClick={close} className="flex h-11 items-center justify-center rounded-xl border border-slate-300 text-sm font-bold">Register</Link>
+            </div>
+          )}
+
+          <p className={sectionTitle}>Need help?</p>
+          <div className="space-y-2 px-5">
             {phones.map((p) => (
-              <a key={p} href={telHref(p)} className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-[13px] font-semibold active:bg-slate-100">
-                <Phone className="h-4 w-4 shrink-0 text-brand-600" /> <span className="truncate">{p}</span>
+              <a key={p} href={telHref(p)} className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 text-[15px] font-semibold active:bg-slate-100">
+                <Phone className="h-4 w-4 text-brand-600" /> {p}
               </a>
             ))}
+            <a href={whatsappHref()} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-[15px] font-bold text-white">
+              <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+            </a>
           </div>
-          <a href={whatsappHref()} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-3 py-2.5 text-sm font-bold text-white">
-            <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
-          </a>
         </div>
       </div>
     </div>
@@ -724,12 +623,12 @@ export function MobileMenu({
   return (
     <>
       <button
-        onClick={() => setOpen((o) => !o)}
-        className="-ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white transition hover:bg-white/10 active:scale-95 lg:hidden"
-        aria-label={open ? "Close menu" : "Open menu"}
+        onClick={() => setOpen(true)}
+        className="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-900 transition hover:bg-slate-100 active:scale-95 lg:hidden"
+        aria-label="Open menu"
         aria-expanded={open}
       >
-        <Burger open={open} />
+        <Menu className="h-6 w-6" strokeWidth={2.2} />
       </button>
       {mounted && createPortal(drawer, document.body)}
     </>

@@ -1,18 +1,19 @@
 import Link from "next/link";
-import { HelpCircle, Megaphone, MessageCircle, Package, Phone, Truck } from "lucide-react";
-import { STORE, telHref, whatsappHref } from "@/lib/store";
+import { Phone } from "lucide-react";
+import { unstable_cache } from "next/cache";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { unstable_cache } from "next/cache";
 import { CATALOG_TAG, getSettings } from "@/lib/settings";
 import { visibleWhere } from "@/lib/products";
 import { formatPrice } from "@/lib/utils";
+import { NAV_CATEGORIES, STORE, telHref } from "@/lib/store";
 import { CategoryMenu, HeaderActions, MobileMenu, NavLinks, SearchBar, StickyShell } from "./HeaderClient";
 
+/** Extra pages (shown in the mobile drawer; the desktop bar uses category/brand shortcuts). */
 export const NAV = [
   { href: "/", label: "Home" },
-  { href: "/products", label: "Shop" },
-  { href: "/products?sort=newest", label: "New Arrivals" },
+  { href: "/products", label: "Shop all" },
+  { href: "/products?sort=newest", label: "New arrivals" },
   { href: "/products?featured=1", label: "Bestsellers" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
@@ -22,69 +23,80 @@ export const NAV = [
 const getMenuData = unstable_cache(
   async (autoHide: boolean) => {
     const visible = visibleWhere({ autoHideOutOfStock: autoHide });
-    const [categories, saleCount] = await Promise.all([
+    const [categories, brands, saleCount] = await Promise.all([
       db.category.findMany({ include: { _count: { select: { products: { where: visible } } } }, orderBy: { name: "asc" } }),
+      db.brand.findMany({ include: { _count: { select: { products: { where: visible } } } }, orderBy: { name: "asc" } }),
       db.product.count({ where: { ...visible, comparePrice: { not: null } } }),
     ]);
     return {
-      // Hide empty categories from the menus.
-      cats: categories.filter((c) => c._count.products > 0).map((c) => ({ name: c.name, slug: c.slug, image: c.image, count: c._count.products })),
+      // Hide empty categories/brands; biggest categories first.
+      cats: categories
+        .filter((c) => c._count.products > 0)
+        .sort((a, b) => b._count.products - a._count.products)
+        .map((c) => ({ name: c.name, slug: c.slug, image: c.image, count: c._count.products })),
+      brands: brands.filter((b) => b._count.products > 0).map((b) => ({ name: b.name, slug: b.slug })),
       saleCount,
     };
   },
-  ["menu-data"],
+  ["menu-data-v2"],
   { tags: [CATALOG_TAG], revalidate: 300 }
 );
 
+/** Yellow emblem + dark wordmark: readable on the white header (the full logo has white text). */
+function Logo({ storeName }: { storeName: string }) {
+  return (
+    <Link href="/" className="flex shrink-0 items-center gap-2 sm:gap-2.5" aria-label={`${storeName} — home`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/emblem.png" alt="" width={96} height={96} className="h-9 w-9 shrink-0 sm:h-11 sm:w-11" />
+      <span className="leading-none">
+        <span className="block text-[21px] font-extrabold tracking-tight text-slate-900 sm:text-[25px]">toolsonline</span>
+        <span className="mt-1 hidden text-[9px] font-semibold tracking-[0.18em] text-slate-500 uppercase sm:block">Your hardware partner</span>
+      </span>
+    </Link>
+  );
+}
+
 export async function Header() {
   const [user, settings] = await Promise.all([getCurrentUser(), getSettings()]);
-  const { cats, saleCount } = await getMenuData(settings.autoHideOutOfStock);
+  const { cats, brands, saleCount } = await getMenuData(settings.autoHideOutOfStock);
   const freeShip = settings.freeShippingThreshold > 0 ? formatPrice(settings.freeShippingThreshold, settings.currency).replace(/\.00$/, "") : null;
   const headerUser = user ? { name: user.name, role: user.role } : null;
+  const navCats = NAV_CATEGORIES.map((n) => ({ ...n, cat: cats.find((c) => c.slug === n.slug) })).filter((n) => n.cat);
+  const searchCats = cats.map((c) => ({ name: c.name, slug: c.slug }));
 
   return (
     <>
-      {/* Utility bar (brand yellow) */}
-      <div className="bg-brand-400 text-slate-900">
-        <div className="container-x flex h-9 items-center justify-between gap-4 text-xs font-medium">
-          <p className="flex min-w-0 items-center gap-2">
-            <Megaphone className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{settings.announcement || settings.tagline}</span>
+      {/* Top bar (dark) */}
+      <div className="bg-slate-950 text-slate-300">
+        <div className="container-x flex h-9 items-center justify-center gap-6 text-[13px] md:justify-between">
+          <p className="hidden min-w-0 truncate md:block">
+            {freeShip ? (
+              <>
+                Free delivery on orders over <strong className="font-bold text-brand-400">{freeShip}</strong> · Cash on delivery available
+              </>
+            ) : (
+              settings.announcement || "Cash on delivery available"
+            )}
           </p>
-          {/* Phones: just the first on small screens, both from md up */}
-          <a href={telHref(STORE.phones[0])} className="flex shrink-0 items-center gap-1.5 font-semibold md:hidden">
-            <Phone className="h-3.5 w-3.5" /> {STORE.phones[0]}
-          </a>
-          <div className="hidden shrink-0 items-center gap-5 md:flex">
-            {STORE.phones.map((p) => (
-              <a key={p} href={telHref(p)} className="flex items-center gap-1.5 hover:underline">
-                <Phone className="h-3.5 w-3.5" /> {p}
+          <nav className="flex shrink-0 items-center gap-5 sm:gap-6" aria-label="Help">
+            <Link href="/account/orders" className="transition hover:text-white">Track order</Link>
+            <Link href="/contact" className="transition hover:text-white">Help</Link>
+            {STORE.phones.map((p, i) => (
+              <a key={p} href={telHref(p)} className={`transition hover:text-white ${i > 0 ? "hidden lg:inline" : ""}`}>
+                {p}
               </a>
             ))}
-            <a href={whatsappHref()} target="_blank" rel="noopener noreferrer" className="hidden items-center gap-1.5 hover:underline lg:flex">
-              <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
-            </a>
-            <Link href="/account/orders" className="flex items-center gap-1.5 hover:underline">
-              <Package className="h-3.5 w-3.5" /> Track order
-            </Link>
-            <Link href="/contact" className="hidden items-center gap-1.5 hover:underline xl:flex">
-              <HelpCircle className="h-3.5 w-3.5" /> Help
-            </Link>
-          </div>
+          </nav>
         </div>
       </div>
 
       <StickyShell>
-        {/* Main bar */}
-        <div className="container-x flex h-16 items-center gap-2 sm:h-[76px] sm:gap-6">
+        {/* Main bar (white) */}
+        <div className="container-x flex h-16 items-center gap-3 sm:h-[76px] lg:gap-8">
           <MobileMenu nav={NAV} categories={cats} user={headerUser} storeName={settings.storeName} phones={STORE.phones} hasDeals={saleCount > 0} />
-          {/* Fixed height + auto width keeps the logo's proportions at every size; shrink-0 stops it being squeezed. */}
-          <Link href="/" className="flex shrink-0 items-center" aria-label={`${settings.storeName} — home`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.webp" alt={settings.storeName} width={700} height={138} className="h-7 w-auto max-w-none min-[380px]:h-8 sm:h-10 lg:h-11" />
-          </Link>
-          <div className="hidden flex-1 justify-center md:flex">
-            <SearchBar />
+          <Logo storeName={settings.storeName} />
+          <div className="hidden flex-1 md:block">
+            <SearchBar categories={searchCats} />
           </div>
           <div className="ml-auto md:ml-0">
             <HeaderActions user={headerUser} />
@@ -93,36 +105,24 @@ export async function Header() {
 
         {/* Mobile search */}
         <div className="container-x pb-3 md:hidden">
-          <SearchBar compact />
+          <SearchBar compact categories={searchCats} />
         </div>
 
-        {/* Category / nav bar */}
-        <div className="hidden border-t border-white/10 lg:block">
-          <div className="container-x flex h-12 items-center gap-8">
+        {/* Nav row: All Categories + shortcuts */}
+        <div className="hidden border-t border-slate-200 lg:block">
+          <div className="container-x flex h-12 items-stretch gap-6">
             <CategoryMenu categories={cats} />
-            <NavLinks nav={NAV} />
-            <div className="ml-auto flex items-center gap-5 text-sm">
-              {freeShip && (
-                <span className="hidden items-center gap-1.5 text-slate-400 xl:flex">
-                  <Truck className="h-4 w-4 text-brand-400" /> Free delivery over <strong className="text-white">{freeShip}</strong>
-                </span>
-              )}
-              <a href={telHref(STORE.phones[0])} className="flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 font-semibold text-white transition hover:bg-white/15">
-                <Phone className="h-4 w-4 text-brand-400" /> {STORE.phones[0]}
-              </a>
-              {saleCount > 0 && (
-                <Link
-                  href="/products?sale=1&sort=discount"
-                  className="flex items-center gap-1.5 rounded-full bg-red-500/15 px-3 py-1.5 text-xs font-bold tracking-wide text-red-300 uppercase ring-1 ring-red-500/30 transition hover:bg-red-500/25"
-                >
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
-                  </span>
-                  Hot deals
-                </Link>
-              )}
-            </div>
+            <NavLinks
+              links={[
+                { href: "/products?featured=1", label: "Bestsellers", hot: true },
+                ...(saleCount > 0 ? [{ href: "/products?sale=1&sort=discount", label: "Deals", hot: true }] : []),
+                ...navCats.map((n) => ({ href: `/products?category=${n.slug}`, label: n.label })),
+                ...brands.map((b) => ({ href: `/products?brand=${b.slug}`, label: b.name, wide: true })),
+              ]}
+            />
+            <Link href="/contact" className="ml-auto hidden shrink-0 items-center gap-2 text-sm font-bold text-slate-900 transition hover:text-brand-700 xl:flex">
+              <Phone className="h-4 w-4 text-brand-600" /> Need help choosing?
+            </Link>
           </div>
         </div>
       </StickyShell>

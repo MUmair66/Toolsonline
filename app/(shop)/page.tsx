@@ -228,8 +228,8 @@ export default async function HomePage() {
 
       {/* 1. Hero: category list · slider · two promo tiles */}
       <section className="container-x pt-4 pb-2 sm:pt-5">
-        <div className="grid gap-4 md:grid-cols-[1fr_240px] lg:grid-cols-[240px_1fr_260px]">
-          <nav aria-label="Shop by category" className="hidden rounded-2xl border border-slate-200 bg-white py-2 lg:block">
+        <div className="grid gap-4 md:grid-cols-[1fr_240px] xl:grid-cols-[240px_1fr_260px]">
+          <nav aria-label="Shop by category" className="hidden rounded-2xl border border-slate-200 bg-white py-2 xl:block">
             <p className="px-4 pt-2 pb-1.5 text-xs font-bold tracking-[0.1em] text-slate-500 uppercase">Categories</p>
             <ul>
               {categories.slice(0, 10).map((c) => (
