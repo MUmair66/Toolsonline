@@ -9,7 +9,7 @@ import { SafeImage } from "@/components/ui/SafeImage";
  * Downscales big photos in the browser before upload (max 2000px JPEG), so uploads stay
  * well under hosting request limits (~4.5 MB on Vercel). The server then makes the final WebP.
  */
-async function shrink(file: File): Promise<File> {
+export async function shrink(file: File): Promise<File> {
   if (!file.type.startsWith("image/") || file.type === "image/gif" || file.size < 1.5 * 1024 * 1024) return file;
   try {
     const bitmap = await createImageBitmap(file);

@@ -11,17 +11,17 @@ export async function GET(req: Request) {
 
   const [products, orders, customers] = await Promise.all([
     hasPerm(user, "products")
-      ? db.product.findMany({ where: { OR: [{ name: { contains: q, mode: "insensitive" } }, { sku: { contains: q, mode: "insensitive" } }] }, take: 5 })
+      ? db.product.findMany({ where: { OR: [{ name: { contains: q } }, { sku: { contains: q } }] }, take: 5 })
       : [],
     hasPerm(user, "orders")
       ? db.order.findMany({
-          where: { OR: [{ orderNumber: { contains: q, mode: "insensitive" } }, { name: { contains: q, mode: "insensitive" } }, { email: { contains: q, mode: "insensitive" } }] },
+          where: { OR: [{ orderNumber: { contains: q } }, { name: { contains: q } }, { email: { contains: q } }] },
           orderBy: { createdAt: "desc" },
           take: 5,
         })
       : [],
     hasPerm(user, "customers")
-      ? db.user.findMany({ where: { OR: [{ name: { contains: q, mode: "insensitive" } }, { email: { contains: q, mode: "insensitive" } }] }, take: 5 })
+      ? db.user.findMany({ where: { OR: [{ name: { contains: q } }, { email: { contains: q } }] }, take: 5 })
       : [],
   ]);
 

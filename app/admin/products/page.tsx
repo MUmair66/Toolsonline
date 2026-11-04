@@ -3,7 +3,8 @@ import type { Prisma } from "@prisma/client";
 import { Copy, Eye, EyeOff, Pencil, Star, Trash2, Upload } from "lucide-react";
 import { db } from "@/lib/db";
 import { requirePerm } from "@/lib/auth";
-import { getSettings } from "@/lib/settings";
+import { unstable_cache } from "next/cache";
+import { CATALOG_TAG, getSettings } from "@/lib/settings";
 import { cn, formatPrice, parseImages } from "@/lib/utils";
 import { bulkProducts, deleteProduct, duplicateProduct, toggleProductActive } from "@/actions/admin";
 import { EmptyRow, ExportLink, FilterBar, PageHeader } from "@/components/admin/ui";
@@ -15,17 +16,36 @@ import { Pagination } from "@/components/ui/Pagination";
 
 export const metadata = { title: "Products" };
 
+/**
+ * Filter dropdown options and catalog totals don't depend on the current filters, so they are cached
+ * instead of re-queried on every filter change. Any product/category/brand edit clears the cache
+ * (revalidateTag(CATALOG_TAG) in actions/admin.ts); stock changes from shop orders show within 60s.
+ */
+const getCatalogMeta = unstable_cache(
+  async () => {
+    const [categories, brands, stats, stockRows] = await Promise.all([
+      db.category.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+      db.brand.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+      db.product.aggregate({ _sum: { stock: true }, _count: true }),
+      db.product.findMany({ select: { price: true, stock: true } }),
+    ]);
+    const inventoryValue = stockRows.reduce((s, p) => s + p.price * Math.max(0, p.stock), 0);
+    return { categories, brands, productCount: stats._count, unitsInStock: stats._sum.stock ?? 0, inventoryValue };
+  },
+  ["admin-catalog-meta-v1"],
+  { tags: [CATALOG_TAG], revalidate: 60 }
+);
+
 type SP = { q?: string; category?: string; brand?: string; status?: string; sort?: string; per?: string; page?: string; saved?: string };
 
 export default async function AdminProducts({ searchParams }: { searchParams: Promise<SP> }) {
-  await requirePerm("products");
-  const sp = await searchParams;
-  const settings = await getSettings();
+  // Settings are cached, so this is fast; the permission check runs alongside the product queries below.
+  const [sp, settings] = await Promise.all([searchParams, getSettings()]);
   const perPage = [15, 30, 60, 100].includes(Number(sp.per)) ? Number(sp.per) : 15;
   const page = Math.max(1, Number(sp.page) || 1);
 
   const where: Prisma.ProductWhereInput = {};
-  if (sp.q) where.OR = [{ name: { contains: sp.q, mode: "insensitive" } }, { sku: { contains: sp.q, mode: "insensitive" } }];
+  if (sp.q) where.OR = [{ name: { contains: sp.q } }, { sku: { contains: sp.q } }];
   if (sp.category === "none") where.categoryId = null;
   else if (sp.category) where.categoryId = sp.category;
   if (sp.brand === "none") where.brandId = null;
@@ -46,14 +66,24 @@ export default async function AdminProducts({ searchParams }: { searchParams: Pr
     : sp.sort === "oldest" ? { createdAt: "asc" }
     : { createdAt: "desc" };
 
-  const [total, products, categories, brands, stats] = await Promise.all([
+  // requirePerm redirects (throws) if the user may not see products, so nothing below renders for them.
+  const [, total, products, meta] = await Promise.all([
+    requirePerm("products"),
     db.product.count({ where }),
-    db.product.findMany({ where, include: { category: true, brand: true }, orderBy, skip: (page - 1) * perPage, take: perPage }),
-    db.category.findMany({ orderBy: { name: "asc" } }),
-    db.brand.findMany({ orderBy: { name: "asc" } }),
-    db.product.aggregate({ _sum: { stock: true }, _count: true }),
+    db.product.findMany({
+      where,
+      orderBy,
+      skip: (page - 1) * perPage,
+      take: perPage,
+      select: {
+        id: true, name: true, sku: true, images: true, price: true, comparePrice: true, stock: true, active: true, featured: true,
+        category: { select: { name: true } },
+        brand: { select: { name: true } },
+      },
+    }),
+    getCatalogMeta(),
   ]);
-  const inventoryValue = (await db.product.findMany({ select: { price: true, stock: true } })).reduce((s, p) => s + p.price * Math.max(0, p.stock), 0);
+  const { categories, brands, inventoryValue } = meta;
 
   const ops: BulkOp[] = [
     { value: "activate", label: "Publish (show in store)" },
@@ -86,8 +116,8 @@ export default async function AdminProducts({ searchParams }: { searchParams: Pr
       </PageHeader>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <div className="card p-4"><p className="text-xs text-slate-500">Total products</p><p className="mt-1 text-xl font-bold">{stats._count}</p></div>
-        <div className="card p-4"><p className="text-xs text-slate-500">Units in stock</p><p className="mt-1 text-xl font-bold">{(stats._sum.stock ?? 0).toLocaleString()}</p></div>
+        <div className="card p-4"><p className="text-xs text-slate-500">Total products</p><p className="mt-1 text-xl font-bold">{meta.productCount}</p></div>
+        <div className="card p-4"><p className="text-xs text-slate-500">Units in stock</p><p className="mt-1 text-xl font-bold">{meta.unitsInStock.toLocaleString()}</p></div>
         <div className="card p-4"><p className="text-xs text-slate-500">Inventory value (retail)</p><p className="mt-1 text-xl font-bold">{formatPrice(inventoryValue, settings.currency)}</p></div>
       </div>
 

@@ -1,9 +1,10 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { CATALOG_TAG } from "@/lib/settings";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
+import { db, withRetry } from "@/lib/db";
 import { destroySession, getCurrentUser } from "@/lib/auth";
 import type { FormState } from "./auth";
 
@@ -30,11 +31,13 @@ export async function saveAddress(id: string | null, _: FormState, fd: FormData)
     const own = await db.address.findFirst({ where: { id, userId: user.id } });
     if (!own) return { error: "Address not found." };
   }
-  await db.$transaction(async (tx) => {
-    if (makeDefault) await tx.address.updateMany({ where: { userId: user.id }, data: { isDefault: false } });
-    if (id) await tx.address.update({ where: { id }, data: { ...data, ...(makeDefault ? { isDefault: true } : {}) } });
-    else await tx.address.create({ data: { ...data, userId: user.id, isDefault: makeDefault } });
-  });
+  await withRetry(() =>
+    db.$transaction(async (tx) => {
+      if (makeDefault) await tx.address.updateMany({ where: { userId: user.id }, data: { isDefault: false } });
+      if (id) await tx.address.update({ where: { id }, data: { ...data, ...(makeDefault ? { isDefault: true } : {}) } });
+      else await tx.address.create({ data: { ...data, userId: user.id, isDefault: makeDefault } });
+    })
+  );
   revalidatePath("/account", "layout");
   return { success: id ? "Address updated." : "Address added." };
 }
@@ -57,10 +60,12 @@ export async function setDefaultAddress(id: string) {
   if (!user) return;
   const addr = await db.address.findFirst({ where: { id, userId: user.id } });
   if (!addr) return;
-  await db.$transaction([
-    db.address.updateMany({ where: { userId: user.id }, data: { isDefault: false } }),
-    db.address.update({ where: { id }, data: { isDefault: true } }),
-  ]);
+  await withRetry(() =>
+    db.$transaction([
+      db.address.updateMany({ where: { userId: user.id }, data: { isDefault: false } }),
+      db.address.update({ where: { id }, data: { isDefault: true } }),
+    ])
+  );
   revalidatePath("/account", "layout");
 }
 
@@ -74,6 +79,7 @@ export async function deleteMyReview(id: string) {
   await db.review.delete({ where: { id } });
   revalidatePath("/account/reviews");
   revalidatePath(`/products/${r.product.slug}`);
+  revalidateTag(CATALOG_TAG); // ratings changed
 }
 
 /* ---------------- Danger zone ---------------- */

@@ -28,7 +28,7 @@ export default async function MyOrdersPage({ searchParams }: { searchParams: Pro
   const where: Prisma.OrderWhereInput = { userId: user.id };
   if (tab === "active") where.status = { in: ["PENDING", "PROCESSING", "SHIPPED"] };
   else if (tab) where.status = tab;
-  if (q) where.OR = [{ orderNumber: { contains: q, mode: "insensitive" } }, { items: { some: { name: { contains: q, mode: "insensitive" } } } }];
+  if (q) where.OR = [{ orderNumber: { contains: q } }, { items: { some: { name: { contains: q } } } }];
 
   const [orders, counts] = await Promise.all([
     db.order.findMany({

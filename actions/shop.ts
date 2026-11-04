@@ -1,10 +1,10 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { db, withRetry } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { computeTotals, getSettings } from "@/lib/settings";
+import { CATALOG_TAG, computeTotals, getSettings } from "@/lib/settings";
 import { evaluateCoupon } from "@/lib/coupon";
 import { generateOrderNumber, parseImages } from "@/lib/utils";
 import type { FormState } from "./auth";
@@ -76,7 +76,7 @@ export async function placeOrder(
   const orderNumber = generateOrderNumber();
 
   try {
-    await db.$transaction(async (tx) => {
+    await withRetry(() => db.$transaction(async (tx) => {
       for (const l of lines) {
         const updated = await tx.product.updateMany({
           where: { id: l.productId, stock: { gte: l.quantity } },
@@ -106,7 +106,7 @@ export async function placeOrder(
           items: { create: lines },
         },
       });
-    });
+    }));
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Could not place order." };
   }
@@ -121,6 +121,7 @@ export async function placeOrder(
   }
 
   revalidatePath("/admin");
+  revalidateTag(CATALOG_TAG); // stock changed
   return { ok: true, orderNumber };
 }
 
@@ -140,6 +141,7 @@ export async function submitReview(productId: string, _: FormState, formData: Fo
   const settings = await getSettings();
   await db.review.create({ data: { rating, comment, userId: user.id, productId, approved: !settings.reviewModeration } });
   revalidatePath(`/products/${product.slug}`);
+  revalidateTag(CATALOG_TAG); // ratings changed
   return {
     success: settings.reviewModeration
       ? "Thanks! Your review will appear once it's approved."
@@ -209,12 +211,15 @@ export async function cancelMyOrder(orderId: string) {
   if (!user) return;
   const order = await db.order.findFirst({ where: { id: orderId, userId: user.id }, include: { items: true } });
   if (!order || order.status !== "PENDING") return;
-  await db.$transaction([
-    db.order.update({ where: { id: order.id }, data: { status: "CANCELLED" } }),
-    ...order.items
-      .filter((i) => i.productId)
-      .map((i) => db.product.update({ where: { id: i.productId! }, data: { stock: { increment: i.quantity } } })),
-  ]);
+  await withRetry(() =>
+    db.$transaction([
+      db.order.update({ where: { id: order.id }, data: { status: "CANCELLED" } }),
+      ...order.items
+        .filter((i) => i.productId)
+        .map((i) => db.product.update({ where: { id: i.productId! }, data: { stock: { increment: i.quantity } } })),
+    ])
+  );
   revalidatePath("/account");
   revalidatePath(`/account/orders/${order.id}`);
+  revalidateTag(CATALOG_TAG); // stock restored
 }

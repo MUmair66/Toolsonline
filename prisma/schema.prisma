@@ -1,54 +1,55 @@
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
 }
 
+// MySQL on Hostinger — same server as the website, so queries take ~1 ms and the database never sleeps.
+// Text searches are case-insensitive through the table collation (utf8mb4 *_ci), so no `mode` option is needed.
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      String   @default("CUSTOMER") // CUSTOMER | STAFF | ADMIN
-  permissions String   @default("[]") // JSON array of section keys, used for STAFF
-  active    Boolean  @default(true)
+  id          String    @id @default(cuid())
+  name        String
+  email       String    @unique
+  password    String
+  role        String    @default("CUSTOMER") // CUSTOMER | STAFF | ADMIN
+  permissions String    @default("[]") @db.VarChar(1000) // JSON array of section keys, used for STAFF
+  active      Boolean   @default(true)
   lastLoginAt DateTime?
-  phone     String?
-  address   String?
-  city      String?
-  postalCode String?
-  country   String?
-  createdAt DateTime @default(now())
-  orders    Order[]
-  reviews   Review[]
-  addresses Address[]
+  phone       String?
+  address     String?   @db.Text
+  city        String?
+  postalCode  String?
+  country     String?
+  createdAt   DateTime  @default(now())
+  orders      Order[]
+  reviews     Review[]
+  addresses   Address[]
 }
 
 model Category {
   id          String    @id @default(cuid())
   name        String
   slug        String    @unique
-  description String?
-  image       String?
+  description String?   @db.Text
+  image       String?   @db.VarChar(1000)
   createdAt   DateTime  @default(now())
   products    Product[]
 }
 
 model Product {
   id           String      @id @default(cuid())
-  name         String
-  slug         String      @unique
-  description  String
+  name         String      @db.VarChar(500)
+  slug         String      @unique @db.VarChar(500)
+  description  String      @db.Text
   price        Float
   comparePrice Float?
   stock        Int         @default(0)
   sku          String?
-  images       String      @default("[]") // JSON array of URLs
+  images       String      @default("[]") @db.VarChar(8000) // JSON array of URLs
   featured     Boolean     @default(false)
   active       Boolean     @default(true)
   categoryId   String?
@@ -70,7 +71,7 @@ model Product {
 model Review {
   id        String   @id @default(cuid())
   rating    Int
-  comment   String
+  comment   String   @db.Text
   approved  Boolean  @default(true)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -90,7 +91,7 @@ model Order {
   name          String
   email         String
   phone         String
-  address       String
+  address       String      @db.Text
   city          String
   postalCode    String
   country       String
@@ -103,7 +104,7 @@ model Order {
   paymentMethod String      @default("COD") // COD | CARD
   paymentStatus String      @default("PENDING") // PENDING | PAID | REFUNDED
   status        String      @default("PENDING") // PENDING | PROCESSING | SHIPPED | DELIVERED | CANCELLED
-  notes         String?
+  notes         String?     @db.Text
   items         OrderItem[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -119,8 +120,8 @@ model OrderItem {
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  name      String
-  image     String?
+  name      String   @db.VarChar(500)
+  image     String?  @db.VarChar(1000)
   price     Float
   quantity  Int
 
@@ -145,8 +146,8 @@ model Message {
   id        String   @id @default(cuid())
   name      String
   email     String
-  subject   String
-  message   String
+  subject   String   @db.VarChar(500)
+  message   String   @db.Text
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
@@ -154,14 +155,14 @@ model Message {
 model Setting {
   id                    Int     @id @default(1)
   storeName             String  @default("ShopNext")
-  tagline               String  @default("Quality products, delivered fast.")
+  tagline               String  @default("Quality products, delivered fast.") @db.VarChar(500)
   contactEmail          String  @default("support@shopnext.com")
   contactPhone          String  @default("+1 (555) 123-4567")
   currency              String  @default("USD")
   shippingFee           Float   @default(5)
   freeShippingThreshold Float   @default(100)
   taxRate               Float   @default(0)
-  announcement          String? @default("Free shipping on orders over $100!")
+  announcement          String? @default("Free shipping on orders over $100!") @db.VarChar(1000)
   lowStockThreshold     Int     @default(5)
   autoHideOutOfStock    Boolean @default(false)
   autoPaidOnDelivery    Boolean @default(true)
@@ -177,7 +178,7 @@ model ActivityLog {
   action    String // created | updated | deleted | bulk | login | import | automation ...
   entity    String // product | order | customer | ...
   entityId  String?
-  details   String?
+  details   String?  @db.Text
   createdAt DateTime @default(now())
 
   @@index([createdAt])
@@ -196,7 +197,7 @@ model Address {
   label      String   @default("Home") // Home | Work | Other
   name       String
   phone      String
-  address    String
+  address    String   @db.Text
   city       String
   postalCode String
   country    String
@@ -210,8 +211,8 @@ model Brand {
   id          String    @id @default(cuid())
   name        String
   slug        String    @unique
-  description String?
-  logo        String?
+  description String?   @db.Text
+  logo        String?   @db.VarChar(1000)
   createdAt   DateTime  @default(now())
   products    Product[]
 }

@@ -8,8 +8,7 @@ import { AdminShell, type Notice } from "@/components/admin/AdminShell";
 export const metadata: Metadata = { title: { default: "Admin", template: "%s | Admin" } };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const user = await requireStaff();
-  const settings = await getSettings();
+  const [user, settings] = await Promise.all([requireStaff(), getSettings()]);
   const perms = PERMISSIONS.map((p) => p.key).filter((k) => hasPerm(user, k)) as Permission[];
   const can = (p: Permission) => perms.includes(p);
 

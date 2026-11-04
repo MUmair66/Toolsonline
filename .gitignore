@@ -13,3 +13,6 @@ uploads/
 .env.production
 !.env.example
 .vercel
+
+.vercel
+.env*

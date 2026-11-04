@@ -41,8 +41,7 @@ function pctChange(cur: number, prev: number) {
 
 export default async function AdminDashboard({ searchParams }: { searchParams: Promise<{ range?: string; denied?: string }> }) {
   const sp = await searchParams;
-  const user = await requireStaff();
-  const settings = await getSettings();
+  const [user, settings] = await Promise.all([requireStaff(), getSettings()]);
   const fmt = (n: number) => formatPrice(n, settings.currency);
   const canOrders = hasPerm(user, "orders");
   const days = RANGES.some((r) => r.key === sp.range) ? Number(sp.range) : 30;
@@ -127,12 +126,17 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
   const catMax = Math.max(1, ...categories.map((c) => c[1]));
 
   // Top products & customers
-  const topProducts = await db.product.findMany({ where: { id: { in: topItems.map((t) => t.productId!) } } });
-  const top = topItems.map((t) => ({ product: topProducts.find((p) => p.id === t.productId), sold: t._sum.quantity ?? 0 })).filter((t) => t.product);
   const spendByUser = new Map<string, number>();
   for (const o of cur) if (o.userId) spendByUser.set(o.userId, (spendByUser.get(o.userId) ?? 0) + o.total);
   const topUserIds = [...spendByUser.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const topUsers = await db.user.findMany({ where: { id: { in: topUserIds.map((t) => t[0]) } }, select: { id: true, name: true, email: true } });
+  // Both lookups depend only on the batch above, so fetch them together (one DB round trip, not two).
+  const [topProducts, topUsers] = await Promise.all([
+    topItems.length
+      ? db.product.findMany({ where: { id: { in: topItems.map((t) => t.productId!) } }, select: { id: true, name: true, images: true } })
+      : [],
+    topUserIds.length ? db.user.findMany({ where: { id: { in: topUserIds.map((t) => t[0]) } }, select: { id: true, name: true, email: true } }) : [],
+  ]);
+  const top = topItems.map((t) => ({ product: topProducts.find((p) => p.id === t.productId), sold: t._sum.quantity ?? 0 })).filter((t) => t.product);
 
   const statusCounts = ORDER_STATUSES.map((s) => ({ status: s, count: byStatus.find((b) => b.status === s)?._count._all ?? 0 }));
   const statusTotal = Math.max(1, statusCounts.reduce((s, x) => s + x.count, 0));

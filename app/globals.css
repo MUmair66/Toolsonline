@@ -146,6 +146,12 @@ body {
 .bg-hazard {
   background-image: repeating-linear-gradient(-45deg, #f5d33a 0 12px, #0b1120 12px 24px);
 }
+/* Admin filter bar: fade the results below it while new results load. */
+form[data-filter-pending] ~ * {
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
 .scrollbar-none {
   scrollbar-width: none;
 }

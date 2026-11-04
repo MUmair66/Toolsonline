@@ -19,7 +19,7 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page) || 1);
   const where: Prisma.OrderWhereInput = {};
-  if (sp.q) where.OR = [{ orderNumber: { contains: sp.q, mode: "insensitive" } }, { name: { contains: sp.q, mode: "insensitive" } }, { email: { contains: sp.q, mode: "insensitive" } }, { phone: { contains: sp.q, mode: "insensitive" } }];
+  if (sp.q) where.OR = [{ orderNumber: { contains: sp.q } }, { name: { contains: sp.q } }, { email: { contains: sp.q } }, { phone: { contains: sp.q } }];
   if (sp.status) where.status = sp.status;
   if (sp.payment) where.paymentStatus = sp.payment;
   if (sp.method) where.paymentMethod = sp.method;

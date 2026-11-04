@@ -29,7 +29,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page) || 1);
   const where: Prisma.ActivityLogWhereInput = {};
-  if (sp.q) where.details = { contains: sp.q, mode: "insensitive" };
+  if (sp.q) where.details = { contains: sp.q };
   if (sp.user) where.userName = sp.user;
   if (sp.action) where.action = sp.action;
   if (sp.entity) where.entity = sp.entity;

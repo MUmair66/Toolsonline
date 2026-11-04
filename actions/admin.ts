@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { CATALOG_TAG, SETTINGS_TAG } from "@/lib/settings";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
+import { db, withRetry } from "@/lib/db";
 import { requireAdmin, requirePerm, requireStaff } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
 import { storeImage } from "@/lib/storage";
@@ -214,15 +214,17 @@ export async function bulkProducts(_: FormState, fd: FormData): Promise<FormStat
       const pct = Number(value);
       if (isNaN(pct) || pct <= -100) return { error: "Enter a valid percentage (e.g. 10 or -15)." };
       const items = await db.product.findMany({ where });
-      await db.$transaction(
-        items.map((p) =>
-          db.product.update({
-            where: { id: p.id },
-            data: {
-              price: round2(p.price * (1 + pct / 100)),
-              comparePrice: p.comparePrice ? round2(p.comparePrice * (1 + pct / 100)) : null,
-            },
-          })
+      await withRetry(() =>
+        db.$transaction(
+          items.map((p) =>
+            db.product.update({
+              where: { id: p.id },
+              data: {
+                price: round2(p.price * (1 + pct / 100)),
+                comparePrice: p.comparePrice ? round2(p.comparePrice * (1 + pct / 100)) : null,
+              },
+            })
+          )
         )
       );
       msg = `Changed prices by ${pct > 0 ? "+" : ""}${pct}% for ${n}`;
@@ -232,19 +234,21 @@ export async function bulkProducts(_: FormState, fd: FormData): Promise<FormStat
       const pct = Number(value);
       if (!(pct > 0 && pct < 100)) return { error: "Enter a discount between 1 and 99%." };
       const items = await db.product.findMany({ where });
-      await db.$transaction(
-        items.map((p) => {
-          const original = p.comparePrice ?? p.price;
-          return db.product.update({ where: { id: p.id }, data: { comparePrice: original, price: round2(original * (1 - pct / 100)) } });
-        })
+      await withRetry(() =>
+        db.$transaction(
+          items.map((p) => {
+            const original = p.comparePrice ?? p.price;
+            return db.product.update({ where: { id: p.id }, data: { comparePrice: original, price: round2(original * (1 - pct / 100)) } });
+          })
+        )
       );
       msg = `Started a ${pct}% flash sale on ${n}`;
       break;
     }
     case "end_sale": {
       const items = await db.product.findMany({ where: { ...where, comparePrice: { not: null } } });
-      await db.$transaction(
-        items.map((p) => db.product.update({ where: { id: p.id }, data: { price: p.comparePrice!, comparePrice: null } }))
+      await withRetry(() =>
+        db.$transaction(items.map((p) => db.product.update({ where: { id: p.id }, data: { price: p.comparePrice!, comparePrice: null } })))
       );
       msg = `Ended the sale on ${plural(items.length, "product")}`;
       break;
@@ -318,6 +322,7 @@ export async function importProducts(rows: ImportRow[], mode: "upsert" | "create
       }
     }
     const compare = Number(r.compareprice);
+    const imageList = (r.images || "").split(/[|;]/).map((s) => s.trim()).filter(Boolean);
     const data = {
       name,
       description: r.description || "",
@@ -327,7 +332,7 @@ export async function importProducts(rows: ImportRow[], mode: "upsert" | "create
       sku: r.sku?.trim() || null,
       categoryId,
       brandId,
-      images: JSON.stringify((r.images || "").split(/[|;]/).map((s) => s.trim()).filter(Boolean)),
+      images: JSON.stringify(imageList),
       featured: truthy(r.featured),
       active: r.active === undefined || r.active === "" ? true : truthy(r.active),
     };
@@ -340,7 +345,8 @@ export async function importProducts(rows: ImportRow[], mode: "upsert" | "create
         : null;
     try {
       if (existing) {
-        await db.product.update({ where: { id: existing.id }, data });
+        // A row without images keeps the product's current photos instead of wiping them.
+        await db.product.update({ where: { id: existing.id }, data: imageList.length ? data : { ...data, images: undefined } });
         updated++;
       } else {
         await db.product.create({ data: { ...data, slug: await uniqueSlug("product", slugify(name)) } });
@@ -418,18 +424,21 @@ async function setOrderStatus(orderIds: string[], status: string, paymentStatus?
     const unRestock = settings?.restockOnCancel !== false && order.status === "CANCELLED" && status !== "CANCELLED";
     let pay = paymentStatus ?? order.paymentStatus;
     if (status === "DELIVERED" && settings?.autoPaidOnDelivery && pay === "PENDING") pay = "PAID";
-    await db.$transaction([
-      db.order.update({ where: { id: order.id }, data: { status, paymentStatus: pay } }),
-      ...order.items
-        .filter((i) => i.productId && (restock || unRestock))
-        .map((i) =>
-          db.product.update({
-            where: { id: i.productId! },
-            data: { stock: restock ? { increment: i.quantity } : { decrement: i.quantity } },
-          })
-        ),
-    ]);
+    await withRetry(() =>
+      db.$transaction([
+        db.order.update({ where: { id: order.id }, data: { status, paymentStatus: pay } }),
+        ...order.items
+          .filter((i) => i.productId && (restock || unRestock))
+          .map((i) =>
+            db.product.update({
+              where: { id: i.productId! },
+              data: { stock: restock ? { increment: i.quantity } : { decrement: i.quantity } },
+            })
+          ),
+      ])
+    );
   }
+  revalidateTag(CATALOG_TAG); // cancelling / un-cancelling changes stock
   return orders.length;
 }
 
@@ -685,6 +694,7 @@ export async function toggleReview(id: string) {
   await logActivity(me, "updated", "review", `${r.approved ? "Hid" : "Approved"} a review on "${r.product.name}"`);
   revalidatePath("/admin", "layout");
   revalidatePath(`/products/${r.product.slug}`);
+  revalidateTag(CATALOG_TAG); // ratings changed
 }
 
 export async function deleteReview(id: string) {

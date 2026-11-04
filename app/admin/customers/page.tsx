@@ -22,7 +22,7 @@ export default async function AdminCustomers({ searchParams }: { searchParams: P
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page) || 1);
   const where: Prisma.UserWhereInput = {};
-  if (sp.q) where.OR = [{ name: { contains: sp.q, mode: "insensitive" } }, { email: { contains: sp.q, mode: "insensitive" } }, { phone: { contains: sp.q, mode: "insensitive" } }];
+  if (sp.q) where.OR = [{ name: { contains: sp.q } }, { email: { contains: sp.q } }, { phone: { contains: sp.q } }];
   if (sp.role) where.role = sp.role;
   if (sp.status === "active") where.active = true;
   if (sp.status === "suspended") where.active = false;

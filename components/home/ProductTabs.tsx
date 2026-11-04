@@ -23,12 +23,12 @@ export function ProductTabs({ tabs, currency }: { tabs: ProductTab[]; currency: 
             aria-selected={t.key === tab.key}
             onClick={() => setActive(t.key)}
             className={cn(
-              "flex shrink-0 items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition",
-              t.key === tab.key ? "bg-slate-950 text-white shadow-lg shadow-slate-950/20" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:text-slate-950 hover:ring-slate-300"
+              "flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition",
+              t.key === tab.key ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:text-slate-900 hover:ring-slate-300"
             )}
           >
             {t.label}
-            <span className={cn("rounded-full px-2 py-0.5 text-[11px]", t.key === tab.key ? "bg-brand-400 text-slate-950" : "bg-slate-100 text-slate-500")}>{t.count}</span>
+            <span className={cn("text-xs", t.key === tab.key ? "text-slate-300" : "text-slate-400")}>{t.count}</span>
           </button>
         ))}
       </div>

@@ -10,12 +10,12 @@ export async function GET(req: Request) {
   const settings = await getSettings();
   const [products, categories] = await Promise.all([
     db.product.findMany({
-      where: { ...visibleWhere(settings), OR: [{ name: { contains: q, mode: "insensitive" } }, { description: { contains: q, mode: "insensitive" } }, { sku: { contains: q, mode: "insensitive" } }, { brand: { name: { contains: q, mode: "insensitive" } } }] },
+      where: { ...visibleWhere(settings), OR: [{ name: { contains: q } }, { description: { contains: q } }, { sku: { contains: q } }, { brand: { name: { contains: q } } }] },
       include: { category: { select: { name: true } }, brand: { select: { name: true } } },
       orderBy: [{ featured: "desc" }, { name: "asc" }],
       take: 6,
     }),
-    db.category.findMany({ where: { name: { contains: q, mode: "insensitive" } }, take: 3 }),
+    db.category.findMany({ where: { name: { contains: q } }, take: 3 }),
   ]);
   return NextResponse.json({
     products: products.map((p) => ({

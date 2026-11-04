@@ -25,6 +25,8 @@ export function FilterBar({ q, placeholder, children }: { q?: string; placeholde
   return (
     <form
       ref={ref}
+      data-filter-pending={pending || undefined}
+      aria-busy={pending}
       className="mb-4 flex flex-wrap items-center gap-2"
       onSubmit={(e) => {
         e.preventDefault();
@@ -72,6 +74,11 @@ export function FilterBar({ q, placeholder, children }: { q?: string; placeholde
       >
         Reset
       </button>
+      {pending && (
+        <span className="flex items-center gap-1.5 text-sm text-slate-500" role="status">
+          <Loader2 className="h-4 w-4 animate-spin" /> Updating…
+        </span>
+      )}
     </form>
   );
 }

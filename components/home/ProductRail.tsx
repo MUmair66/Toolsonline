@@ -23,7 +23,7 @@ export function ProductRail({ products, currency, title, subtitle }: { products:
     <div>
       <div className="mb-8 flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{title}</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{title}</h2>
           {subtitle && <p className="mt-1 text-slate-500">{subtitle}</p>}
         </div>
         <div className="flex gap-2">
@@ -33,8 +33,7 @@ export function ProductRail({ products, currency, title, subtitle }: { products:
               onClick={() => scroll(d)}
               disabled={d === -1 ? edge.start : edge.end}
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-30",
-                d === 1 ? "bg-slate-950 text-white hover:bg-slate-800" : "border border-slate-300 text-slate-700 hover:bg-slate-100"
+                "flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-40"
               )}
               aria-label={d === 1 ? "Scroll right" : "Scroll left"}
             >

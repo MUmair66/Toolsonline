@@ -21,7 +21,7 @@ export default async function AdminReviews({ searchParams }: { searchParams: Pro
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page) || 1);
   const where: Prisma.ReviewWhereInput = {};
-  if (sp.q) where.OR = [{ comment: { contains: sp.q, mode: "insensitive" } }, { product: { name: { contains: sp.q, mode: "insensitive" } } }, { user: { name: { contains: sp.q, mode: "insensitive" } } }];
+  if (sp.q) where.OR = [{ comment: { contains: sp.q } }, { product: { name: { contains: sp.q } } }, { user: { name: { contains: sp.q } } }];
   if (sp.rating) where.rating = Number(sp.rating);
   if (sp.status === "visible") where.approved = true;
   if (sp.status === "hidden") where.approved = false;
