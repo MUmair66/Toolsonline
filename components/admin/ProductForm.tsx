@@ -6,6 +6,7 @@ import { saveProduct } from "@/actions/admin";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { FormMessage } from "@/components/ui/FormMessage";
 import { ImageUploader } from "./ImageUploader";
+import { AiDescriptionField } from "./AiDescriptionTools";
 
 type P = {
   id: string;
@@ -41,10 +42,7 @@ export function ProductForm({ product, categories, brands }: { product?: P; cate
             <label className="label" htmlFor="slug">URL slug</label>
             <input id="slug" name="slug" defaultValue={product?.slug} className="input" placeholder="Auto-generated from name" />
           </div>
-          <div>
-            <label className="label" htmlFor="description">Description</label>
-            <textarea id="description" name="description" rows={7} defaultValue={product?.description} className="input" />
-          </div>
+          <AiDescriptionField defaultValue={product?.description ?? ""} />
         </section>
 
         <section className="card p-6">

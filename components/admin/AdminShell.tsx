@@ -33,6 +33,7 @@ import {
 import { logout } from "@/actions/auth";
 import { cn } from "@/lib/utils";
 import { ROLES, type Permission } from "@/lib/permissions";
+import { AiAssistant } from "./AiAssistant";
 
 export type Notice = { text: string; href: string; tone: "info" | "warn" };
 type BadgeKey = "orders" | "messages" | "reviews";
@@ -349,6 +350,7 @@ export function AdminShell({
         <main className="mx-auto max-w-[1600px] p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
       {paletteOpen && <CommandPalette items={allItems} perms={perms} onClose={() => setPaletteOpen(false)} />}
+      <AiAssistant />
     </div>
   );
 }
